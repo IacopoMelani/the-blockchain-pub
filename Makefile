@@ -11,8 +11,10 @@ BOOT_PORT=8111
 NODE_IP=127.0.0.1
 NODE_PORT=8112
 
+PROGRAM_NAME=./tbb
+
 bootstrap:
-	.\tbb.exe run \
+	$(PROGRAM_NAME) run \
 		--datadir=$(BOOT_DATA_DIR) \
 		--ip=$(BOOT_IP) \
 		--port=$(BOOT_PORT) \
@@ -22,7 +24,7 @@ bootstrap:
 		--miner=$(BOOT_ADDRESS)
 
 add-node:
-	.\tbb.exe run \
+	$(PROGRAM_NAME) run \
 	--datadir=$(NODE_DATA_DIR) \
 	--ip=$(NODE_IP) \
 	--port=$(NODE_PORT) \
@@ -32,4 +34,4 @@ add-node:
 	--miner=$(NODE_ADDRESS)
 
 new-wallet:
-	.\tbb.exe wallet new-account --datadir=$(BOOT_DATA_DIR)
+	$(PROGRAM_NAME) wallet new-account --datadir=$(BOOT_DATA_DIR)
