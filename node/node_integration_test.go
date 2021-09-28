@@ -18,6 +18,7 @@ package node
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"io/ioutil"
 	"os"
@@ -63,7 +64,9 @@ func TestNode_Run(t *testing.T) {
 
 	n := New(datadir, "127.0.0.1", 8085, database.NewAccount(DefaultMiner), PeerNode{}, nodeVersion, defaultTestMiningDifficulty)
 
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancelFunc()
+
 	err = n.Run(ctx, true, "")
 	if err != nil {
 		t.Fatal(err)
@@ -156,13 +159,10 @@ func TestNode_Mining(t *testing.T) {
 		// Periodically check if we mined the 2 blocks
 		ticker := time.NewTicker(10 * time.Second)
 
-		for {
-			select {
-			case <-ticker.C:
-				if n.state.LatestBlock().Header.Number == 1 {
-					closeNode()
-					return
-				}
+		for range ticker.C {
+			if n.state.LatestBlock().Header.Number == 1 {
+				closeNode()
+				return
 			}
 		}
 	}()
@@ -218,35 +218,32 @@ func TestNode_ForgedTx(t *testing.T) {
 		ticker := time.NewTicker(time.Second * (miningIntervalSeconds - 3))
 		wasForgedTxAdded := false
 
-		for {
-			select {
-			case <-ticker.C:
-				if !n.state.LatestBlockHash().IsEmpty() {
-					if wasForgedTxAdded && !n.isMining {
+		for range ticker.C {
+			if !n.state.LatestBlockHash().IsEmpty() {
+				if wasForgedTxAdded && !n.isMining {
+					closeNode()
+					return
+				}
+
+				if !wasForgedTxAdded {
+					// Attempt to forge the same TX but with modified time
+					// Because the TX.time changed, the TX.signature will be considered forged
+					// database.NewTx() changes the TX time
+					forgedTx := database.NewTx(andrej, babaYaga, txValue, txNonce, "")
+					// Use the signature from a valid TX
+					forgedSignedTx := database.NewSignedTx(forgedTx, validSignedTx.Sig)
+
+					err = n.AddPendingTX(forgedSignedTx, andrejPeerNode)
+					t.Log(err)
+					if err == nil {
+						t.Errorf("adding a forged TX to the Mempool should not be possible")
 						closeNode()
 						return
 					}
 
-					if !wasForgedTxAdded {
-						// Attempt to forge the same TX but with modified time
-						// Because the TX.time changed, the TX.signature will be considered forged
-						// database.NewTx() changes the TX time
-						forgedTx := database.NewTx(andrej, babaYaga, txValue, txNonce, "")
-						// Use the signature from a valid TX
-						forgedSignedTx := database.NewSignedTx(forgedTx, validSignedTx.Sig)
+					wasForgedTxAdded = true
 
-						err = n.AddPendingTX(forgedSignedTx, andrejPeerNode)
-						t.Log(err)
-						if err == nil {
-							t.Errorf("adding a forged TX to the Mempool should not be possible")
-							closeNode()
-							return
-						}
-
-						wasForgedTxAdded = true
-
-						time.Sleep(time.Second * (miningIntervalSeconds + 3))
-					}
+					time.Sleep(time.Second * (miningIntervalSeconds + 3))
 				}
 			}
 		}
@@ -307,33 +304,30 @@ func TestNode_ReplayedTx(t *testing.T) {
 		ticker := time.NewTicker(time.Second * (miningIntervalSeconds - 3))
 		wasReplayedTxAdded := false
 
-		for {
-			select {
-			case <-ticker.C:
-				if !n.state.LatestBlockHash().IsEmpty() {
-					if wasReplayedTxAdded && !n.isMining {
+		for range ticker.C {
+			if !n.state.LatestBlockHash().IsEmpty() {
+				if wasReplayedTxAdded && !n.isMining {
+					closeNode()
+					return
+				}
+
+				// The Andrej's original TX got mined.
+				// Execute the attack by replaying the TX again!
+				if !wasReplayedTxAdded {
+					// Simulate the TX was submitted to different node
+					n.archivedTXs = make(map[string]database.SignedTx)
+					// Execute the attack
+					err = n.AddPendingTX(signedTx, babaYagaPeerNode)
+					t.Log(err)
+					if err == nil {
+						t.Errorf("re-adding a TX to the Mempool should not be possible because of Nonce")
 						closeNode()
 						return
 					}
 
-					// The Andrej's original TX got mined.
-					// Execute the attack by replaying the TX again!
-					if !wasReplayedTxAdded {
-						// Simulate the TX was submitted to different node
-						n.archivedTXs = make(map[string]database.SignedTx)
-						// Execute the attack
-						err = n.AddPendingTX(signedTx, babaYagaPeerNode)
-						t.Log(err)
-						if err == nil {
-							t.Errorf("re-adding a TX to the Mempool should not be possible because of Nonce")
-							closeNode()
-							return
-						}
+					wasReplayedTxAdded = true
 
-						wasReplayedTxAdded = true
-
-						time.Sleep(time.Second * (miningIntervalSeconds + 3))
-					}
+					time.Sleep(time.Second * (miningIntervalSeconds + 3))
 				}
 			}
 		}
@@ -383,6 +377,9 @@ func TestNode_MiningStopsOnNewSyncedBlock(t *testing.T) {
 	}
 
 	err = database.InitDataDirIfNotExists(dataDir, genesisJson)
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer fs.RemoveDir(dataDir)
 
 	err = copyKeystoreFilesIntoTestDataDirPath(dataDir)
@@ -406,6 +403,7 @@ func TestNode_MiningStopsOnNewSyncedBlock(t *testing.T) {
 
 	// Allow the test to run for 30 mins, in the worst case
 	ctx, closeNode := context.WithTimeout(context.Background(), time.Minute*30)
+	defer closeNode()
 
 	tx1 := database.NewTx(andrej, babaYaga, 1, 1, "")
 	tx2 := database.NewTx(andrej, babaYaga, 2, 2, "")
@@ -436,18 +434,22 @@ func TestNode_MiningStopsOnNewSyncedBlock(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	errs := make(chan error, 1)
+
 	// Add 2 new TXs into the BabaYaga's node, triggers mining
 	go func() {
 		time.Sleep(time.Second * (miningIntervalSeconds - 2))
 
 		err := n.AddPendingTX(signedTx1, nInfo)
 		if err != nil {
-			t.Fatal(err)
+			errs <- err
+			return
 		}
 
 		err = n.AddPendingTX(signedTx2, nInfo)
 		if err != nil {
-			t.Fatal(err)
+			errs <- err
+			return
 		}
 	}()
 
@@ -458,7 +460,8 @@ func TestNode_MiningStopsOnNewSyncedBlock(t *testing.T) {
 	go func() {
 		time.Sleep(time.Second * (miningIntervalSeconds + 2))
 		if !n.isMining {
-			t.Fatal("should be mining")
+			errs <- errors.New("should be mining")
+			return
 		}
 
 		// Change the mining difficulty back to the testing level from previously purposefully slow, high value
@@ -466,21 +469,24 @@ func TestNode_MiningStopsOnNewSyncedBlock(t *testing.T) {
 		n.ChangeMiningDifficulty(defaultTestMiningDifficulty)
 		_, err := n.state.AddBlock(validSyncedBlock)
 		if err != nil {
-			t.Fatal(err)
+			errs <- err
+			return
 		}
 		// Mock the Andrej's block came from a network
 		n.newSyncedBlocks <- validSyncedBlock
 
 		time.Sleep(time.Second)
 		if n.isMining {
-			t.Fatal("synced block should have canceled mining")
+			errs <- errors.New("synced block should have canceled mining")
+			return
 		}
 
 		// Mined TX1 by Andrej should be removed from the Mempool
 		_, onlyTX2IsPending := n.pendingTXs[tx2Hash.Hex()]
 
 		if len(n.pendingTXs) != 1 && !onlyTX2IsPending {
-			t.Fatal("synced block should have canceled mining of already mined TX")
+			errs <- errors.New("synced block should have canceled mining of already mined TX")
+			return
 		}
 	}()
 
@@ -488,13 +494,10 @@ func TestNode_MiningStopsOnNewSyncedBlock(t *testing.T) {
 		// Regularly check whenever both TXs are now mined
 		ticker := time.NewTicker(time.Second * 10)
 
-		for {
-			select {
-			case <-ticker.C:
-				if n.state.LatestBlock().Header.Number == 1 {
-					closeNode()
-					return
-				}
+		for range ticker.C {
+			if n.state.LatestBlock().Header.Number == 1 {
+				closeNode()
+				return
 			}
 		}
 	}()
@@ -543,6 +546,11 @@ func TestNode_MiningStopsOnNewSyncedBlock(t *testing.T) {
 	if len(n.pendingTXs) != 0 {
 		t.Fatal("no pending TXs should be left to mine")
 	}
+
+	err = <-errs
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestNode_MiningSpamTransactions(t *testing.T) {
@@ -567,6 +575,8 @@ func TestNode_MiningSpamTransactions(t *testing.T) {
 	txValue := uint(200)
 	txCount := uint(4)
 
+	errs := make(chan error, 1)
+
 	go func() {
 		// Wait for the node to run and initialize its state and other components
 		time.Sleep(time.Second)
@@ -583,7 +593,7 @@ func TestNode_MiningSpamTransactions(t *testing.T) {
 
 			signedTx, err := wallet.SignTxWithKeystoreAccount(tx, andrej, testKsAccountsPwd, wallet.GetKeystoreDirPath(dataDir))
 			if err != nil {
-				t.Fatal(err)
+				errs <- err
 			}
 
 			spamTXs[i-1] = signedTx
@@ -600,19 +610,21 @@ func TestNode_MiningSpamTransactions(t *testing.T) {
 		// Periodically check if we mined the block
 		ticker := time.NewTicker(10 * time.Second)
 
-		for {
-			select {
-			case <-ticker.C:
-				if !n.state.LatestBlockHash().IsEmpty() {
-					closeNode()
-					return
-				}
+		for range ticker.C {
+			if !n.state.LatestBlockHash().IsEmpty() {
+				closeNode()
+				return
 			}
 		}
 	}()
 
 	// Run the node, mining and everything in a blocking call (hence the go-routines before)
 	_ = n.Run(ctx, true, "")
+
+	err = <-errs
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	expectedAndrejBalance := andrejBalance - (txCount * txValue) - (txCount * database.TxFee)
 	expectedBabaYagaBalance := babaYagaBalance + (txCount * txValue)

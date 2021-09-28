@@ -124,7 +124,7 @@ func NewPeerNode(ip string, port uint64, isBootstrap bool, acc common.Address, c
 }
 
 func (n *Node) Run(ctx context.Context, isSSLDisabled bool, sslEmail string) error {
-	fmt.Println(fmt.Sprintf("Listening on: %s:%d", n.info.IP, n.info.Port))
+	fmt.Printf("Listening on: %s:%d\n", n.info.IP, n.info.Port)
 
 	state, err := database.NewStateFromDisk(n.dataDir, n.miningDifficulty)
 	if err != nil {

@@ -62,6 +62,7 @@ func fileExist(filePath string) bool {
 	return true
 }
 
+//lint:ignore U1000 maybe later
 func dirExists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {

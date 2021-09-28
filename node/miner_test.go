@@ -99,7 +99,8 @@ func TestMineWithTimeout(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), time.Microsecond*100)
+	ctx, cancelFunc := context.WithTimeout(context.Background(), time.Microsecond*100)
+	defer cancelFunc()
 
 	_, err = Mine(ctx, pendingBlock, defaultTestMiningDifficulty)
 	if err == nil {
