@@ -16,14 +16,20 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
+	"path/filepath"
 
+	"github.com/IacopoMelani/the-blockchain-bar/database"
 	"github.com/IacopoMelani/the-blockchain-bar/wallet"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/cmd/utils"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 )
 
@@ -40,6 +46,7 @@ func walletCmd() *cobra.Command {
 
 	walletCmd.AddCommand(walletNewAccountCmd())
 	walletCmd.AddCommand(walletPrintPrivKeyCmd())
+	walletCmd.AddCommand(walletSendTransaction())
 
 	return walletCmd
 }
@@ -97,6 +104,121 @@ func walletPrintPrivKeyCmd() *cobra.Command {
 	return cmd
 }
 
+func walletSendTransaction() *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "send-transaction",
+		Short: "Sends a transaction to the blockchain.",
+		Run: func(cmd *cobra.Command, args []string) {
+			ksFile, _ := cmd.Flags().GetString(flagKeystoreFile)
+			password := getPassPhrase("Please enter a password to decrypt the wallet:", false)
+
+			keyJson, err := ioutil.ReadFile(ksFile)
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
+
+			key, err := keystore.DecryptKey(keyJson, password)
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
+
+			amount, err := GetTransactionAmount()
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
+
+			toAddress, err := GetToAddress()
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
+
+			tx := database.NewTx(key.Address, database.NewAccount(toAddress), amount, 0, "")
+
+			signedTx, err := wallet.SignTxWithKeystoreAccount(tx, key.Address, password, filepath.Dir(ksFile))
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
+
+			fmt.Printf("Signed transaction: %s\n", common.Bytes2Hex(signedTx.Sig))
+
+			fmt.Printf("Sending transaction to the blockchain...\n")
+
+			body, err := makeRequest("http://localhost:8111/tx/add", map[string]interface{}{
+				"from":  tx.From,
+				"sig":   common.Bytes2Hex(signedTx.Sig),
+				"to":    tx.To,
+				"value": tx.Value,
+				"time":  tx.Time,
+			})
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
+
+			fmt.Printf("%s\n", body)
+		},
+	}
+
+	addKeystoreFlag(cmd)
+
+	return cmd
+}
+
 func getPassPhrase(prompt string, confirmation bool) string {
 	return utils.GetPassPhrase(prompt, confirmation)
+}
+
+// ask to user to insert amount of transaction
+func GetTransactionAmount() (uint, error) {
+	var value uint
+	fmt.Print("Insert transaction amount: ")
+	fmt.Scanln(&value)
+	if value == 0 {
+		return 0, fmt.Errorf("invalid amount")
+	}
+	return value, nil
+}
+
+func GetToAddress() (string, error) {
+	var toAddress string
+	fmt.Print("Insert to address: ")
+	fmt.Scanln(&toAddress)
+	if toAddress == "" {
+		return "", fmt.Errorf("invalid to address")
+	}
+	return toAddress, nil
+}
+
+// make POST request with JSON body
+func makeRequest(url string, data map[string]interface{}) ([]byte, error) {
+
+	jsonBody, err := json.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
 }

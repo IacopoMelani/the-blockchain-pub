@@ -19,9 +19,10 @@ import (
 	"crypto/elliptic"
 	"crypto/sha256"
 	"encoding/json"
+	"time"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"time"
 )
 
 func NewAccount(value string) common.Address {
@@ -69,6 +70,16 @@ func (t Tx) Hash() (Hash, error) {
 
 func (t Tx) Encode() ([]byte, error) {
 	return json.Marshal(t)
+}
+
+func (t Tx) Decode() (SignedTx, error) {
+	var signedTx SignedTx
+	err := json.Unmarshal([]byte(t.Data), &signedTx)
+	if err != nil {
+		return SignedTx{}, err
+	}
+
+	return signedTx, nil
 }
 
 func (t SignedTx) Hash() (Hash, error) {
