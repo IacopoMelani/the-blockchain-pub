@@ -39,6 +39,14 @@ type TxAddReq struct {
 	RawTx string `json:"tx"`
 }
 
+type NextNonceReq struct {
+	Account string `json:"account"`
+}
+
+type NextNonceRes struct {
+	Nonce uint `json:"nonce"`
+}
+
 type TxAddRes struct {
 	Success bool `json:"success"`
 }
@@ -95,6 +103,21 @@ func txAddHandler(w http.ResponseWriter, r *http.Request, node *Node) {
 	}
 
 	writeRes(w, TxAddRes{Success: true})
+}
+
+func nextNonceHandler(w http.ResponseWriter, r *http.Request, node *Node) {
+	enableCors(&w)
+
+	req := NextNonceReq{}
+	err := readReq(r, &req)
+	if err != nil {
+		writeErrRes(w, err)
+		return
+	}
+
+	nonce := node.pendingState.GetNextAccountNonce(database.NewAccount(req.Account))
+
+	writeRes(w, NextNonceRes{Nonce: nonce})
 }
 
 func statusHandler(w http.ResponseWriter, r *http.Request, node *Node) {

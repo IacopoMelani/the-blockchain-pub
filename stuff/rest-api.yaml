@@ -1,0 +1,175 @@
+_type: export
+__export_format: 4
+__export_date: 2021-09-29T12:46:20.176Z
+__export_source: insomnia.desktop.app:v2021.5.3
+resources:
+  - _id: req_cb47c1b0c33a463aabd83223449fc20e
+    parentId: wrk_8791fa43eab54daab58daccc0d50c01f
+    modified: 1632919418413
+    created: 1632917924040
+    url: http://localhost:8111/node/nonce/next
+    name: Next Nonce
+    description: ""
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"account": "<ADDRESS>"
+        }
+    parameters: []
+    headers:
+      - name: Content-Type
+        value: application/json
+        id: pair_6361e22248314ee59866d0d45cefbb23
+    authentication: {}
+    metaSortKey: -1632917924040
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+  - _id: wrk_8791fa43eab54daab58daccc0d50c01f
+    parentId: null
+    modified: 1632919512950
+    created: 1632825862819
+    name: the-blockchain-bar
+    description: ""
+    scope: collection
+    _type: workspace
+  - _id: req_0cf27bc9972c47feb86884ff9fe31280
+    parentId: wrk_8791fa43eab54daab58daccc0d50c01f
+    modified: 1632919446114
+    created: 1632830216766
+    url: http://localhost:8111/node/sync
+    name: Sync
+    description: ""
+    method: GET
+    body: {}
+    parameters:
+      - id: pair_bbffa27f67ff4c8fbc158dac176993b3
+        name: mode
+        value: before
+        description: ""
+        disabled: false
+      - id: pair_5c44149ffd0348899204143eafa26afe
+        name: fromBlock
+        value: 000000374f9e15129323d95e0360b0196dc07c8877693ad4e1c775e56fa0a963
+        description: ""
+        disabled: false
+      - id: pair_0dc17aa2458e487398ecbbec76e183fa
+        name: last
+        value: "1"
+        description: ""
+        disabled: true
+    headers: []
+    authentication: {}
+    metaSortKey: -1632830216766
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+  - _id: req_5c0c64ae19e64b058c313314d43a6999
+    parentId: wrk_8791fa43eab54daab58daccc0d50c01f
+    modified: 1632830978611
+    created: 1632826545686
+    url: http://localhost:8111/node/status
+    name: status
+    description: ""
+    method: GET
+    body: {}
+    parameters: []
+    headers: []
+    authentication: {}
+    metaSortKey: -1632826545686
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+  - _id: req_83eb656e84124aa6b41f5afa7db2fb50
+    parentId: wrk_8791fa43eab54daab58daccc0d50c01f
+    modified: 1632917907085
+    created: 1632825885125
+    url: http://localhost:8111/tx/add
+    name: Send TX
+    description: ""
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"tx": "0xf75e32cf73de1ff96fc080ffc603b22cafc0ba8f"
+        }
+    parameters: []
+    headers:
+      - name: Content-Type
+        value: application/json
+        id: pair_2298019007a343598c8f85c856e12f62
+    authentication: {}
+    metaSortKey: -1632825885125
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+  - _id: req_f078ed5b69544aeeace76ccfbbe0127d
+    parentId: wrk_8791fa43eab54daab58daccc0d50c01f
+    modified: 1632830208687
+    created: 1632825869929
+    url: http://localhost:8111/balances/list
+    name: Balances
+    description: ""
+    method: GET
+    body: {}
+    parameters: []
+    headers: []
+    authentication: {}
+    metaSortKey: -1632825869929
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+  - _id: env_c0955d89d9817d33ce00ff57471924c2b0285b6f
+    parentId: wrk_8791fa43eab54daab58daccc0d50c01f
+    modified: 1632825862833
+    created: 1632825862833
+    name: Base Environment
+    data: {}
+    dataPropertyOrder: null
+    color: null
+    isPrivate: false
+    metaSortKey: 1632825862833
+    _type: environment
+  - _id: jar_c0955d89d9817d33ce00ff57471924c2b0285b6f
+    parentId: wrk_8791fa43eab54daab58daccc0d50c01f
+    modified: 1632825862837
+    created: 1632825862837
+    name: Default Jar
+    cookies: []
+    _type: cookie_jar
+  - _id: spc_5c93a78740f9414f875ae310e2149829
+    parentId: wrk_8791fa43eab54daab58daccc0d50c01f
+    modified: 1632825862823
+    created: 1632825862823
+    fileName: Varie
+    contents: ""
+    contentType: yaml
+    _type: api_spec

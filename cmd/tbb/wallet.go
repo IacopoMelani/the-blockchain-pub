@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 
 	"github.com/IacopoMelani/the-blockchain-bar/database"
+	"github.com/IacopoMelani/the-blockchain-bar/node"
 	"github.com/IacopoMelani/the-blockchain-bar/wallet"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
@@ -137,7 +138,22 @@ func walletSendTransaction() *cobra.Command {
 				os.Exit(1)
 			}
 
-			tx := database.NewTx(key.Address, database.NewAccount(toAddress), amount, 7, "")
+			nextNonceRawBody, err := makeRequest("http://localhost:8111/node/nonce/next", "POST", map[string]interface{}{
+				"account": key.Address.Hex(),
+			})
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
+
+			var nextNonceRes node.NextNonceRes
+			err = json.Unmarshal(nextNonceRawBody, &nextNonceRes)
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
+
+			tx := database.NewTx(key.Address, database.NewAccount(toAddress), amount, nextNonceRes.Nonce, "")
 
 			signedTx, err := wallet.SignTxWithKeystoreAccount(tx, key.Address, password, filepath.Dir(ksFile))
 			if err != nil {
@@ -157,7 +173,7 @@ func walletSendTransaction() *cobra.Command {
 
 			fmt.Printf("Sending transaction to the blockchain...\n")
 
-			body, err := makeRequest("http://localhost:8111/tx/add", map[string]interface{}{
+			body, err := makeRequest("http://localhost:8111/tx/add", "POST", map[string]interface{}{
 				"tx": rawTx,
 			})
 			if err != nil {
@@ -200,14 +216,18 @@ func GetToAddress() (string, error) {
 }
 
 // make POST request with JSON body
-func makeRequest(url string, data map[string]interface{}) ([]byte, error) {
+func makeRequest(url string, method string, data map[string]interface{}) ([]byte, error) {
+
+	if data == nil {
+		data = make(map[string]interface{})
+	}
 
 	jsonBody, err := json.Marshal(data)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return nil, err
 	}

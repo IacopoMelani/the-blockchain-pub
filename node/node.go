@@ -50,6 +50,8 @@ const endpointAddPeerQueryKeyPort = "port"
 const endpointAddPeerQueryKeyMiner = "miner"
 const endpointAddPeerQueryKeyVersion = "version"
 
+const endpointNextNonce = "/node/nonce/next"
+
 const miningIntervalSeconds = 10
 const DefaultMiningDifficulty = 2
 
@@ -172,6 +174,10 @@ func (n *Node) serveHttp(ctx context.Context, isSSLDisabled bool, sslEmail strin
 
 	handler.HandleFunc(endpointAddPeer, func(w http.ResponseWriter, r *http.Request) {
 		addPeerHandler(w, r, n)
+	})
+
+	handler.HandleFunc(endpointNextNonce, func(rw http.ResponseWriter, r *http.Request) {
+		nextNonceHandler(rw, r, n)
 	})
 
 	if isSSLDisabled {
