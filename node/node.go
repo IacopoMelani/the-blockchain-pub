@@ -60,7 +60,7 @@ const endpointAddPeerQueryKeyVersion = "version"
 const endpointNextNonce = "/node/nonce/next"
 
 const miningIntervalSeconds = 10
-const DefaultMiningDifficulty = 1
+const DefaultMiningDifficulty = 3
 
 type PeerNode struct {
 	IP          string         `json:"ip"`
@@ -146,7 +146,7 @@ func (n *Node) Run(ctx context.Context, isSSLDisabled bool, sslEmail string) err
 	pendingState := state.Copy()
 	n.pendingState = &pendingState
 
-	if state.LatestBlock().Header.Number > 0 {
+	if state.NextBlockNumber() > 0 && state.LatestBlock().Header.Number > DefaultMiningDifficulty {
 		n.ChangeMiningDifficulty(state.LatestBlock().Header.Difficulty)
 	}
 
@@ -260,9 +260,10 @@ func (n *Node) mine(ctx context.Context) error {
 
 func (n *Node) minePendingTXs(ctx context.Context) error {
 
-	difficulty := n.state.LatestBlock().Header.Difficulty
+	difficulty := n.miningDifficulty
 
-	if n.state.NextBlockNumber()%10 == 0 {
+	// increase mining difficulty
+	if n.state.NextBlockNumber() > 0 && n.state.NextBlockNumber()%100 == 0 {
 		difficulty++
 		n.ChangeMiningDifficulty(difficulty)
 	}

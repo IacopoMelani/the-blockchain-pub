@@ -28,7 +28,7 @@ import (
 func (n *Node) sync(ctx context.Context) error {
 	n.doSync()
 
-	ticker := time.NewTicker(45 * time.Second)
+	ticker := time.NewTicker(10 * time.Second)
 
 	for {
 		select {
@@ -120,12 +120,12 @@ func (n *Node) syncBlocks(peer PeerNode, status StatusRes) error {
 	}
 
 	for _, block := range blocks {
-		err = n.addBlock(block)
+		err = n.addBlock(block.Value)
 		if err != nil {
 			return err
 		}
 
-		n.newSyncedBlocks <- block
+		n.newSyncedBlocks <- block.Value
 	}
 
 	return nil
@@ -216,16 +216,18 @@ func queryPeerStatus(peer PeerNode) (StatusRes, error) {
 	return statusRes, nil
 }
 
-func fetchBlocksFromPeer(peer PeerNode, fromBlock database.Hash) ([]database.Block, error) {
+func fetchBlocksFromPeer(peer PeerNode, fromBlock database.Hash) ([]database.BlockFS, error) {
 	fmt.Printf("Importing blocks from Peer %s...\n", peer.TcpAddress())
 
 	url := fmt.Sprintf(
-		"%s://%s%s?%s=%s",
+		"%s://%s%s?%s=%s&%s=%s",
 		peer.ApiProtocol(),
 		peer.TcpAddress(),
 		endpointSync,
 		endpointSyncQueryKeyFromBlock,
 		fromBlock.Hex(),
+		endpointSyncQueryKeyMode,
+		endpointSyncQueryKeyModeAfter,
 	)
 
 	res, err := http.Get(url)

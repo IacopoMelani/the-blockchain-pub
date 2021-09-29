@@ -33,6 +33,8 @@ const flagPort = "port"
 const flagBootstrapAcc = "bootstrap-account"
 const flagBootstrapIp = "bootstrap-ip"
 const flagBootstrapPort = "bootstrap-port"
+const flagAmount = "amount"
+const flagToAddress = "to"
 
 func main() {
 	var tbbCmd = &cobra.Command{
@@ -62,6 +64,14 @@ func addDefaultRequiredFlags(cmd *cobra.Command) {
 func addKeystoreFlag(cmd *cobra.Command) {
 	cmd.Flags().String(flagKeystoreFile, "", "Absolute path to the encrypted keystore file")
 	cmd.MarkFlagRequired(flagKeystoreFile)
+}
+
+func addAmountFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint(flagAmount, 0, "Amount to send")
+}
+
+func addToAddressFlag(cmd *cobra.Command) {
+	cmd.Flags().String(flagToAddress, "", "Address to send the funds to")
 }
 
 func getDataDirFromCmd(cmd *cobra.Command) string {

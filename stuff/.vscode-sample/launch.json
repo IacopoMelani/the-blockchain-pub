@@ -1,0 +1,42 @@
+{
+    // Usare IntelliSense per informazioni sui possibili attributi.
+    // Al passaggio del mouse vengono visualizzate le descrizioni degli attributi esistenti.
+    // Per altre informazioni, visitare: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "bootstrap",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/tbb",
+            "args": [
+                "run",
+                "--datadir=tbb-data",
+                "--ip=127.0.0.1",
+                "--port=8111",
+                "--bootstrap-ip=127.0.0.1",
+                "--bootstrap-port=8111",
+                "--disable-ssl",
+                "--miner=0x50543e830590fD03a0301fAA0164d731f0E2ff7D"
+            ]
+        },
+        {
+            "name": "add-node",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/tbb",
+            "args": [
+                "run",
+                "--datadir=tbb-data-01",
+                "--ip=127.0.0.1",
+                "--port=8112",
+                "--bootstrap-ip=127.0.0.1",
+                "--bootstrap-port=8111",
+                "--disable-ssl",
+                "--miner=0xF75E32Cf73De1FF96fc080Ffc603b22CaFC0Ba8F"
+            ]
+        }
+    ]
+}

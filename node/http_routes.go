@@ -62,7 +62,7 @@ type StatusRes struct {
 }
 
 type SyncRes struct {
-	Blocks []database.Block `json:"blocks"`
+	Blocks []database.BlockFS `json:"blocks"`
 }
 
 type AddPeerRes struct {

@@ -126,16 +126,24 @@ func walletSendTransaction() *cobra.Command {
 				os.Exit(1)
 			}
 
-			amount, err := GetTransactionAmount()
-			if err != nil {
-				fmt.Println(err.Error())
-				os.Exit(1)
+			amount, _ := cmd.Flags().GetUint(flagAmount)
+
+			if amount == 0 {
+				amount, err = GetTransactionAmount()
+				if err != nil {
+					fmt.Println(err.Error())
+					os.Exit(1)
+				}
 			}
 
-			toAddress, err := GetToAddress()
-			if err != nil {
-				fmt.Println(err.Error())
-				os.Exit(1)
+			toAddress, _ := cmd.Flags().GetString(flagToAddress)
+
+			if toAddress == "" {
+				toAddress, err = GetToAddress()
+				if err != nil {
+					fmt.Println(err.Error())
+					os.Exit(1)
+				}
 			}
 
 			nextNonceRawBody, err := makeRequest("http://localhost:8111/node/nonce/next", "POST", map[string]interface{}{
@@ -186,6 +194,8 @@ func walletSendTransaction() *cobra.Command {
 	}
 
 	addKeystoreFlag(cmd)
+	addToAddressFlag(cmd)
+	addAmountFlag(cmd)
 
 	return cmd
 }
