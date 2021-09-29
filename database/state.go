@@ -38,10 +38,10 @@ type State struct {
 	latestBlockHash Hash
 	hasGenesisBlock bool
 
-	miningDifficulty uint
+	miningDifficulty uint64
 }
 
-func NewStateFromDisk(dataDir string, miningDifficulty uint) (*State, error) {
+func NewStateFromDisk(dataDir string, miningDifficulty uint64) (*State, error) {
 	err := InitDataDirIfNotExists(dataDir, []byte(genesisJson))
 	if err != nil {
 		return nil, err
@@ -168,7 +168,7 @@ func (s *State) GetNextAccountNonce(account common.Address) uint {
 	return s.Account2Nonce[account] + 1
 }
 
-func (c *State) ChangeMiningDifficulty(newDifficulty uint) {
+func (c *State) ChangeMiningDifficulty(newDifficulty uint64) {
 	c.miningDifficulty = newDifficulty
 }
 

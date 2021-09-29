@@ -399,7 +399,7 @@ func TestNode_MiningStopsOnNewSyncedBlock(t *testing.T) {
 	)
 
 	// Start mining with a high mining difficulty, just to be slow on purpose and let a synced block arrive first
-	n := New(dataDir, nInfo.IP, nInfo.Port, babaYaga, nInfo, nodeVersion, uint(5))
+	n := New(dataDir, nInfo.IP, nInfo.Port, babaYaga, nInfo, nodeVersion, uint64(5))
 
 	// Allow the test to run for 30 mins, in the worst case
 	ctx, closeNode := context.WithTimeout(context.Background(), time.Minute*30)
@@ -428,8 +428,8 @@ func TestNode_MiningStopsOnNewSyncedBlock(t *testing.T) {
 	// Pre-mine a valid block without running the `n.Run()`
 	// with Andrej as a miner who will receive the block reward,
 	// to simulate the block came on the fly from another peer
-	validPreMinedPb := NewPendingBlock(database.Hash{}, 0, andrej, []database.SignedTx{signedTx1})
-	validSyncedBlock, err := Mine(ctx, validPreMinedPb, defaultTestMiningDifficulty)
+	validPreMinedPb := NewPendingBlock(database.Hash{}, 0, andrej, defaultTestMiningDifficulty, []database.SignedTx{signedTx1})
+	validSyncedBlock, err := Mine(ctx, validPreMinedPb)
 	if err != nil {
 		t.Fatal(err)
 	}

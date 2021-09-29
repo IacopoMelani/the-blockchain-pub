@@ -24,6 +24,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/labstack/echo/v4"
 )
 
 type ErrRes struct {
@@ -69,76 +70,67 @@ type AddPeerRes struct {
 	Error   string `json:"error"`
 }
 
-func listBalancesHandler(w http.ResponseWriter, r *http.Request, state *database.State) {
-	enableCors(&w)
-
-	writeRes(w, BalancesRes{state.LatestBlockHash(), state.Balances})
+func listBalancesHandler(c echo.Context, node *Node) error {
+	return c.JSON(http.StatusOK, BalancesRes{node.state.LatestBlockHash(), node.state.Balances})
 }
 
-func txAddHandler(w http.ResponseWriter, r *http.Request, node *Node) {
-	req := TxAddReq{}
-	err := readReq(r, &req)
+func txAddHandler(c echo.Context, node *Node) error {
+
+	var req TxAddReq
+
+	err := readReq(c.Request(), &req)
 	if err != nil {
-		writeErrRes(w, err)
-		return
+		return c.JSON(http.StatusBadRequest, ErrRes{err.Error()})
 	}
 
 	var signedTx database.SignedTx
 
 	rawBytes, err := hexutil.Decode(req.RawTx)
 	if err != nil {
-		writeErrRes(w, err)
-		return
+		return c.JSON(http.StatusBadRequest, ErrRes{err.Error()})
 	}
 
 	if err := rlp.DecodeBytes(rawBytes, &signedTx); err != nil {
-		writeErrRes(w, err)
-		return
+		return c.JSON(http.StatusBadRequest, ErrRes{err.Error()})
 	}
 
 	err = node.AddPendingTX(signedTx, node.info)
 	if err != nil {
-		writeErrRes(w, err)
-		return
+		return c.JSON(http.StatusInternalServerError, ErrRes{err.Error()})
 	}
 
-	writeRes(w, TxAddRes{Success: true})
+	return c.JSON(http.StatusOK, TxAddRes{Success: true})
 }
 
-func nextNonceHandler(w http.ResponseWriter, r *http.Request, node *Node) {
-	enableCors(&w)
+func nextNonceHandler(c echo.Context, node *Node) error {
 
 	req := NextNonceReq{}
-	err := readReq(r, &req)
+	err := readReq(c.Request(), &req)
 	if err != nil {
-		writeErrRes(w, err)
-		return
+		return c.JSON(http.StatusBadRequest, ErrRes{err.Error()})
 	}
 
 	nonce := node.pendingState.GetNextAccountNonce(database.NewAccount(req.Account))
 
-	writeRes(w, NextNonceRes{Nonce: nonce})
+	return c.JSON(http.StatusOK, NextNonceRes{Nonce: nonce})
 }
 
-func statusHandler(w http.ResponseWriter, r *http.Request, node *Node) {
-	enableCors(&w)
-
-	res := StatusRes{
+func statusHandler(c echo.Context, node *Node) error {
+	return c.JSON(http.StatusOK, StatusRes{
 		Hash:        node.state.LatestBlockHash(),
 		Number:      node.state.LatestBlock().Header.Number,
 		KnownPeers:  node.knownPeers,
 		PendingTXs:  node.getPendingTXsAsArray(),
 		NodeVersion: node.nodeVersion,
 		Account:     database.NewAccount(node.info.Account.String()),
-	}
-
-	writeRes(w, res)
+	})
 }
 
-func syncHandler(w http.ResponseWriter, r *http.Request, node *Node) {
-	reqHash := r.URL.Query().Get(endpointSyncQueryKeyFromBlock)
-	reqMode := r.URL.Query().Get(endpointSyncQueryKeyMode)
-	reqLast := r.URL.Query().Get(endpointSyncQueryKeyLast)
+func syncHandler(c echo.Context, node *Node) error {
+
+	reqHash := c.Request().URL.Query().Get(endpointSyncQueryKeyFromBlock)
+	reqMode := c.Request().URL.Query().Get(endpointSyncQueryKeyMode)
+	reqLast := c.Request().URL.Query().Get(endpointSyncQueryKeyLast)
 
 	// convert reqLast to int64
 	last, err := strconv.ParseInt(reqLast, 10, 64)
@@ -153,8 +145,7 @@ func syncHandler(w http.ResponseWriter, r *http.Request, node *Node) {
 	hash := database.Hash{}
 	err = hash.UnmarshalText([]byte(reqHash))
 	if err != nil {
-		writeErrRes(w, err)
-		return
+		return c.JSON(http.StatusBadRequest, ErrRes{err.Error()})
 	}
 
 	var blocks []database.BlockFS
@@ -163,21 +154,22 @@ func syncHandler(w http.ResponseWriter, r *http.Request, node *Node) {
 	case endpointSyncQueryKeyModeAfter:
 		blocks, err = database.GetBlocksAfter(hash, last, node.dataDir)
 		if err != nil {
-			writeErrRes(w, err)
-			return
+			return c.JSON(http.StatusInternalServerError, ErrRes{err.Error()})
 		}
 	case endpointSyncQueryKeyModeBefore:
 		blocks, err = database.GetBlocksBefore(hash, last, node.dataDir)
 		if err != nil {
-			writeErrRes(w, err)
-			return
+			return c.JSON(http.StatusInternalServerError, ErrRes{err.Error()})
 		}
 	}
 
-	writeRes(w, map[string][]database.BlockFS{"blocks": blocks})
+	return c.JSON(http.StatusOK, map[string][]database.BlockFS{"blocks": blocks})
 }
 
-func addPeerHandler(w http.ResponseWriter, r *http.Request, node *Node) {
+func addPeerHandler(c echo.Context, node *Node) error {
+
+	r := c.Request()
+
 	peerIP := r.URL.Query().Get(endpointAddPeerQueryKeyIP)
 	peerPortRaw := r.URL.Query().Get(endpointAddPeerQueryKeyPort)
 	minerRaw := r.URL.Query().Get(endpointAddPeerQueryKeyMiner)
@@ -185,8 +177,7 @@ func addPeerHandler(w http.ResponseWriter, r *http.Request, node *Node) {
 
 	peerPort, err := strconv.ParseUint(peerPortRaw, 10, 32)
 	if err != nil {
-		writeRes(w, AddPeerRes{false, err.Error()})
-		return
+		return c.JSON(http.StatusBadRequest, ErrRes{err.Error()})
 	}
 
 	peer := NewPeerNode(peerIP, peerPort, false, database.NewAccount(minerRaw), true, versionRaw)
@@ -195,5 +186,5 @@ func addPeerHandler(w http.ResponseWriter, r *http.Request, node *Node) {
 
 	fmt.Printf("Peer '%s' was added into KnownPeers\n", peer.TcpAddress())
 
-	writeRes(w, AddPeerRes{true, ""})
+	return c.JSON(http.StatusOK, AddPeerRes{true, ""})
 }

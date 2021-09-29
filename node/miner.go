@@ -25,18 +25,19 @@ import (
 )
 
 type PendingBlock struct {
-	parent database.Hash
-	number uint64
-	time   uint64
-	miner  common.Address
-	txs    []database.SignedTx
+	parent     database.Hash
+	number     uint64
+	time       uint64
+	miner      common.Address
+	difficulty uint64
+	txs        []database.SignedTx
 }
 
-func NewPendingBlock(parent database.Hash, number uint64, miner common.Address, txs []database.SignedTx) PendingBlock {
-	return PendingBlock{parent, number, uint64(time.Now().Unix()), miner, txs}
+func NewPendingBlock(parent database.Hash, number uint64, miner common.Address, difficulty uint64, txs []database.SignedTx) PendingBlock {
+	return PendingBlock{parent, number, uint64(time.Now().Unix()), miner, difficulty, txs}
 }
 
-func Mine(ctx context.Context, pb PendingBlock, miningDifficulty uint) (database.Block, error) {
+func Mine(ctx context.Context, pb PendingBlock) (database.Block, error) {
 	if len(pb.txs) == 0 {
 		return database.Block{}, fmt.Errorf("mining empty blocks is not allowed")
 	}
@@ -47,7 +48,7 @@ func Mine(ctx context.Context, pb PendingBlock, miningDifficulty uint) (database
 	var hash database.Hash
 	var nonce uint32
 
-	for !database.IsBlockHashValid(hash, miningDifficulty) {
+	for !database.IsBlockHashValid(hash, pb.difficulty) {
 		select {
 		case <-ctx.Done():
 			fmt.Println("Mining cancelled!")
@@ -63,7 +64,7 @@ func Mine(ctx context.Context, pb PendingBlock, miningDifficulty uint) (database
 			fmt.Printf("Mining %d Pending TXs. Attempt: %d\n", len(pb.txs), attempt)
 		}
 
-		block = database.NewBlock(pb.parent, pb.number, nonce, pb.time, pb.miner, pb.txs)
+		block = database.NewBlock(pb.parent, pb.number, nonce, pb.time, pb.miner, pb.difficulty, pb.txs)
 		blockHash, err := block.Hash()
 		if err != nil {
 			return database.Block{}, fmt.Errorf("couldn't mine block. %s", err.Error())

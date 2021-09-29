@@ -24,6 +24,8 @@ import (
 
 	"github.com/caddyserver/certmagic"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 
 	"github.com/IacopoMelani/the-blockchain-bar/database"
 )
@@ -35,6 +37,11 @@ const DefaultBootstrapAcc = "0x50543e830590fD03a0301fAA0164d731f0E2ff7D"
 const DefaultMiner = "0x0000000000000000000000000000000000000000"
 const DefaultIP = "127.0.0.1"
 const HttpSSLPort = 443
+
+const endpointBalancesList = "/balances/list"
+
+const endpointTxAdd = "/tx/add"
+
 const endpointStatus = "/node/status"
 
 const endpointSync = "/node/sync"
@@ -53,7 +60,7 @@ const endpointAddPeerQueryKeyVersion = "version"
 const endpointNextNonce = "/node/nonce/next"
 
 const miningIntervalSeconds = 10
-const DefaultMiningDifficulty = 2
+const DefaultMiningDifficulty = 1
 
 type PeerNode struct {
 	IP          string         `json:"ip"`
@@ -96,11 +103,11 @@ type Node struct {
 	nodeVersion     string
 
 	// Number of zeroes the hash must start with to be considered valid. Default 3
-	miningDifficulty uint
+	miningDifficulty uint64
 	isMining         bool
 }
 
-func New(dataDir string, ip string, port uint64, acc common.Address, bootstrap PeerNode, version string, miningDifficulty uint) *Node {
+func New(dataDir string, ip string, port uint64, acc common.Address, bootstrap PeerNode, version string, miningDifficulty uint64) *Node {
 	knownPeers := make(map[string]PeerNode)
 
 	n := &Node{
@@ -139,9 +146,14 @@ func (n *Node) Run(ctx context.Context, isSSLDisabled bool, sslEmail string) err
 	pendingState := state.Copy()
 	n.pendingState = &pendingState
 
+	if state.LatestBlock().Header.Number > 0 {
+		n.ChangeMiningDifficulty(state.LatestBlock().Header.Difficulty)
+	}
+
 	fmt.Println("Blockchain state:")
 	fmt.Printf("	- height: %d\n", n.state.LatestBlock().Header.Number)
 	fmt.Printf("	- hash: %s\n", n.state.LatestBlockHash().Hex())
+	fmt.Printf("	- difficulty: %d\n", n.state.LatestBlock().Header.Difficulty)
 
 	go n.sync(ctx)
 	go n.mine(ctx)
@@ -154,34 +166,37 @@ func (n *Node) LatestBlockHash() database.Hash {
 }
 
 func (n *Node) serveHttp(ctx context.Context, isSSLDisabled bool, sslEmail string) error {
-	handler := http.NewServeMux()
 
-	handler.HandleFunc("/balances/list", func(w http.ResponseWriter, r *http.Request) {
-		listBalancesHandler(w, r, n.state)
+	e := echo.New()
+
+	e.Use(middleware.Recover())
+
+	e.GET(endpointBalancesList, func(c echo.Context) error {
+		return listBalancesHandler(c, n)
 	})
 
-	handler.HandleFunc("/tx/add", func(w http.ResponseWriter, r *http.Request) {
-		txAddHandler(w, r, n)
+	e.POST(endpointTxAdd, func(c echo.Context) error {
+		return txAddHandler(c, n)
 	})
 
-	handler.HandleFunc(endpointStatus, func(w http.ResponseWriter, r *http.Request) {
-		statusHandler(w, r, n)
+	e.GET(endpointStatus, func(c echo.Context) error {
+		return statusHandler(c, n)
 	})
 
-	handler.HandleFunc(endpointSync, func(w http.ResponseWriter, r *http.Request) {
-		syncHandler(w, r, n)
+	e.GET(endpointSync, func(c echo.Context) error {
+		return syncHandler(c, n)
 	})
 
-	handler.HandleFunc(endpointAddPeer, func(w http.ResponseWriter, r *http.Request) {
-		addPeerHandler(w, r, n)
+	e.GET(endpointAddPeer, func(c echo.Context) error {
+		return addPeerHandler(c, n)
 	})
 
-	handler.HandleFunc(endpointNextNonce, func(rw http.ResponseWriter, r *http.Request) {
-		nextNonceHandler(rw, r, n)
+	e.POST(endpointNextNonce, func(c echo.Context) error {
+		return nextNonceHandler(c, n)
 	})
 
 	if isSSLDisabled {
-		server := &http.Server{Addr: fmt.Sprintf(":%d", n.info.Port), Handler: handler}
+		server := &http.Server{Addr: fmt.Sprintf(":%d", n.info.Port), Handler: e}
 
 		go func() {
 			<-ctx.Done()
@@ -191,14 +206,16 @@ func (n *Node) serveHttp(ctx context.Context, isSSLDisabled bool, sslEmail strin
 		err := server.ListenAndServe()
 		// This shouldn't be an error!
 		if err != http.ErrServerClosed {
-			return err
+			panic(err)
 		}
 
 		return nil
+
 	} else {
+
 		certmagic.DefaultACME.Email = sslEmail
 
-		return certmagic.HTTPS([]string{n.info.IP}, handler)
+		return certmagic.HTTPS([]string{n.info.IP}, e)
 	}
 }
 
@@ -242,14 +259,23 @@ func (n *Node) mine(ctx context.Context) error {
 }
 
 func (n *Node) minePendingTXs(ctx context.Context) error {
+
+	difficulty := n.state.LatestBlock().Header.Difficulty
+
+	if n.state.NextBlockNumber()%10 == 0 {
+		difficulty++
+		n.ChangeMiningDifficulty(difficulty)
+	}
+
 	blockToMine := NewPendingBlock(
 		n.state.LatestBlockHash(),
 		n.state.NextBlockNumber(),
 		n.info.Account,
+		difficulty,
 		n.getPendingTXsAsArray(),
 	)
 
-	minedBlock, err := Mine(ctx, blockToMine, n.miningDifficulty)
+	minedBlock, err := Mine(ctx, blockToMine)
 	if err != nil {
 		return err
 	}
@@ -280,7 +306,7 @@ func (n *Node) removeMinedPendingTXs(block database.Block) {
 	}
 }
 
-func (n *Node) ChangeMiningDifficulty(newDifficulty uint) {
+func (n *Node) ChangeMiningDifficulty(newDifficulty uint64) {
 	n.miningDifficulty = newDifficulty
 	n.state.ChangeMiningDifficulty(newDifficulty)
 }

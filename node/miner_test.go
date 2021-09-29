@@ -69,7 +69,7 @@ func TestMine(t *testing.T) {
 
 	ctx := context.Background()
 
-	minedBlock, err := Mine(ctx, pendingBlock, defaultTestMiningDifficulty)
+	minedBlock, err := Mine(ctx, pendingBlock)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,7 +102,7 @@ func TestMineWithTimeout(t *testing.T) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), time.Microsecond*100)
 	defer cancelFunc()
 
-	_, err = Mine(ctx, pendingBlock, defaultTestMiningDifficulty)
+	_, err = Mine(ctx, pendingBlock)
 	if err == nil {
 		t.Fatal(err)
 	}
@@ -134,6 +134,7 @@ func createRandomPendingBlock(privKey *ecdsa.PrivateKey, acc common.Address) (Pe
 		database.Hash{},
 		0,
 		acc,
+		defaultTestMiningDifficulty,
 		[]database.SignedTx{signedTx},
 	), nil
 }

@@ -54,11 +54,12 @@ type Block struct {
 }
 
 type BlockHeader struct {
-	Parent Hash           `json:"parent"`
-	Number uint64         `json:"number"`
-	Nonce  uint32         `json:"nonce"`
-	Time   uint64         `json:"time"`
-	Miner  common.Address `json:"miner"`
+	Parent     Hash           `json:"parent"`
+	Number     uint64         `json:"number"`
+	Nonce      uint32         `json:"nonce"`
+	Time       uint64         `json:"time"`
+	Miner      common.Address `json:"miner"`
+	Difficulty uint64         `json:"difficulty"`
 }
 
 type BlockFS struct {
@@ -66,8 +67,8 @@ type BlockFS struct {
 	Value Block `json:"block"`
 }
 
-func NewBlock(parent Hash, number uint64, nonce uint32, time uint64, miner common.Address, txs []SignedTx) Block {
-	return Block{BlockHeader{parent, number, nonce, time, miner}, txs}
+func NewBlock(parent Hash, number uint64, nonce uint32, time uint64, miner common.Address, difficulty uint64, txs []SignedTx) Block {
+	return Block{BlockHeader{parent, number, nonce, time, miner, difficulty}, txs}
 }
 
 func (b Block) Hash() (Hash, error) {
@@ -79,10 +80,10 @@ func (b Block) Hash() (Hash, error) {
 	return sha256.Sum256(blockJson), nil
 }
 
-func IsBlockHashValid(hash Hash, miningDifficulty uint) bool {
-	zeroesCount := uint(0)
+func IsBlockHashValid(hash Hash, miningDifficulty uint64) bool {
+	zeroesCount := uint64(0)
 
-	for i := uint(0); i < miningDifficulty; i++ {
+	for i := uint64(0); i < miningDifficulty; i++ {
 		if fmt.Sprintf("%x", hash[i]) == "0" {
 			zeroesCount++
 		}
