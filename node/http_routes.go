@@ -22,6 +22,8 @@ import (
 
 	"github.com/IacopoMelani/the-blockchain-bar/database"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/rlp"
 )
 
 type ErrRes struct {
@@ -34,12 +36,7 @@ type BalancesRes struct {
 }
 
 type TxAddReq struct {
-	From  string `json:"from"`
-	Sig   string `json:"sig"`
-	To    string `json:"to"`
-	Value uint   `json:"value"`
-	Data  string `json:"data"`
-	Time  uint64 `json:"time"`
+	RawTx string `json:"tx"`
 }
 
 type TxAddRes struct {
@@ -78,17 +75,18 @@ func txAddHandler(w http.ResponseWriter, r *http.Request, node *Node) {
 		return
 	}
 
-	from := database.NewAccount(req.From)
+	var signedTx database.SignedTx
 
-	if from.String() == common.HexToAddress("").String() {
-		writeErrRes(w, fmt.Errorf("%s is an invalid 'from' sender", from.String()))
+	rawBytes, err := hexutil.Decode(req.RawTx)
+	if err != nil {
+		writeErrRes(w, err)
 		return
 	}
 
-	nonce := node.state.GetNextAccountNonce(from)
-	tx := database.NewTx(from, database.NewAccount(req.To), req.Value, nonce, req.Data)
-
-	signedTx := database.SignedTx{Tx: tx, Sig: []byte(req.Sig)}
+	if err := rlp.DecodeBytes(rawBytes, &signedTx); err != nil {
+		writeErrRes(w, err)
+		return
+	}
 
 	err = node.AddPendingTX(signedTx, node.info)
 	if err != nil {

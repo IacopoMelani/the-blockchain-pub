@@ -72,16 +72,6 @@ func (t Tx) Encode() ([]byte, error) {
 	return json.Marshal(t)
 }
 
-func (t Tx) Decode() (SignedTx, error) {
-	var signedTx SignedTx
-	err := json.Unmarshal([]byte(t.Data), &signedTx)
-	if err != nil {
-		return SignedTx{}, err
-	}
-
-	return signedTx, nil
-}
-
 func (t SignedTx) Hash() (Hash, error) {
 	txJson, err := t.Encode()
 	if err != nil {

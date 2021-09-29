@@ -29,7 +29,8 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/cmd/utils"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/spf13/cobra"
 )
 
@@ -136,7 +137,7 @@ func walletSendTransaction() *cobra.Command {
 				os.Exit(1)
 			}
 
-			tx := database.NewTx(key.Address, database.NewAccount(toAddress), amount, 0, "")
+			tx := database.NewTx(key.Address, database.NewAccount(toAddress), amount, 7, "")
 
 			signedTx, err := wallet.SignTxWithKeystoreAccount(tx, key.Address, password, filepath.Dir(ksFile))
 			if err != nil {
@@ -144,16 +145,20 @@ func walletSendTransaction() *cobra.Command {
 				os.Exit(1)
 			}
 
-			fmt.Printf("Signed transaction: %s\n", common.Bytes2Hex(signedTx.Sig))
+			rawBytes, err := rlp.EncodeToBytes(signedTx)
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
+
+			rawTx := hexutil.Encode(rawBytes)
+
+			fmt.Printf("Signed transaction: %s\n", rawTx)
 
 			fmt.Printf("Sending transaction to the blockchain...\n")
 
 			body, err := makeRequest("http://localhost:8111/tx/add", map[string]interface{}{
-				"from":  tx.From,
-				"sig":   common.Bytes2Hex(signedTx.Sig),
-				"to":    tx.To,
-				"value": tx.Value,
-				"time":  tx.Time,
+				"tx": rawTx,
 			})
 			if err != nil {
 				fmt.Println(err.Error())
