@@ -76,6 +76,7 @@ func Mine(ctx context.Context, pb PendingBlock) (database.Block, error) {
 	fmt.Printf("\nMined new Block '%x' using PoW 🎉🎉🎉\n", hash)
 	fmt.Printf("\tHeight: '%v'\n", block.Header.Number)
 	fmt.Printf("\tNonce: '%v'\n", block.Header.Nonce)
+	fmt.Printf("\tDifficulty: '%v'\n", block.Header.Difficulty)
 	fmt.Printf("\tCreated: '%v'\n", block.Header.Time)
 	fmt.Printf("\tMiner: '%v'\n", block.Header.Miner.String())
 	fmt.Printf("\tParent: '%v'\n\n", block.Header.Parent.Hex())

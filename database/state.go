@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"os"
 	"reflect"
-	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -249,6 +248,14 @@ func applyBlock(b Block, s *State) error {
 		return err
 	}
 
+	currentDifficulty := s.miningDifficulty
+
+	// increase mining difficulty
+	if s.NextBlockNumber() > 0 && s.NextBlockNumber()%100 == 0 {
+		currentDifficulty++
+		s.ChangeMiningDifficulty(currentDifficulty)
+	}
+
 	if !IsBlockHashValid(hash, s.miningDifficulty) {
 		return fmt.Errorf("invalid block hash %x", hash)
 	}
@@ -265,9 +272,9 @@ func applyBlock(b Block, s *State) error {
 }
 
 func applyTXs(txs []SignedTx, s *State) error {
-	sort.Slice(txs, func(i, j int) bool {
-		return txs[i].Time < txs[j].Time
-	})
+	// sort.Slice(txs, func(i, j int) bool {
+	// 	return txs[i].Time < txs[j].Time
+	// })
 
 	for _, tx := range txs {
 		err := ApplyTx(tx, s)

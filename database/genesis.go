@@ -24,8 +24,8 @@ import (
 
 var genesisJson = `{
   "genesis_time": "2020-06-01T00:00:00.000000000Z",
-  "chain_id": "the-blockchain-bar-ledger",
-  "symbol": "TBB",
+  "chain_id": "the-blockchain-pub-ledger",
+  "symbol": "TBP",
   "balances": {
     "0x50543e830590fD03a0301fAA0164d731f0E2ff7D": 1000000
   }

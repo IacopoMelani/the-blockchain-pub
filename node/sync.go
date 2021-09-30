@@ -98,7 +98,7 @@ func (n *Node) syncBlocks(peer PeerNode, status StatusRes) error {
 	}
 
 	// If the peer has less blocks than us, ignore it
-	if status.Number < localBlockNumber {
+	if status.Number <= localBlockNumber {
 		return nil
 	}
 

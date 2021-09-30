@@ -110,7 +110,7 @@ func nextNonceHandler(c echo.Context, node *Node) error {
 		return c.JSON(http.StatusBadRequest, ErrRes{err.Error()})
 	}
 
-	nonce := node.pendingState.GetNextAccountNonce(database.NewAccount(req.Account))
+	nonce := node.state.GetNextAccountNonce(database.NewAccount(req.Account))
 
 	return c.JSON(http.StatusOK, NextNonceRes{Nonce: nonce})
 }

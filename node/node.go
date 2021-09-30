@@ -60,7 +60,7 @@ const endpointAddPeerQueryKeyVersion = "version"
 const endpointNextNonce = "/node/nonce/next"
 
 const miningIntervalSeconds = 10
-const DefaultMiningDifficulty = 1
+const DefaultMiningDifficulty = 2
 
 type PeerNode struct {
 	IP          string         `json:"ip"`
@@ -369,6 +369,10 @@ func (n *Node) addBlock(block database.Block) error {
 	// Reset the pending state
 	pendingState := n.state.Copy()
 	n.pendingState = &pendingState
+
+	if n.state.LatestBlock().Header.Difficulty > n.miningDifficulty {
+		n.ChangeMiningDifficulty(n.state.LatestBlock().Header.Difficulty)
+	}
 
 	return nil
 }
