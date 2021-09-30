@@ -60,7 +60,7 @@ const endpointAddPeerQueryKeyVersion = "version"
 const endpointNextNonce = "/node/nonce/next"
 
 const miningIntervalSeconds = 10
-const DefaultMiningDifficulty = 3
+const DefaultMiningDifficulty = 1
 
 type PeerNode struct {
 	IP          string         `json:"ip"`
@@ -367,6 +367,16 @@ func (n *Node) addBlock(block database.Block) error {
 	}
 
 	// Reset the pending state
+	pendingState := n.state.Copy()
+	n.pendingState = &pendingState
+
+	return nil
+}
+
+// resetChain is a wrapper around the n.state.ResetChain() to have a single function for changing the main state
+func (n *Node) resetChain() error {
+
+	n.state.ResetChain(n.dataDir)
 	pendingState := n.state.Copy()
 	n.pendingState = &pendingState
 

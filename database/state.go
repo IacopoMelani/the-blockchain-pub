@@ -41,11 +41,7 @@ type State struct {
 	miningDifficulty uint64
 }
 
-func NewStateFromDisk(dataDir string, miningDifficulty uint64) (*State, error) {
-	err := InitDataDirIfNotExists(dataDir, []byte(genesisJson))
-	if err != nil {
-		return nil, err
-	}
+func getInitialBalances(dataDir string) (map[common.Address]uint, error) {
 
 	gen, err := loadGenesis(getGenesisJsonFilePath(dataDir))
 	if err != nil {
@@ -55,6 +51,20 @@ func NewStateFromDisk(dataDir string, miningDifficulty uint64) (*State, error) {
 	balances := make(map[common.Address]uint)
 	for account, balance := range gen.Balances {
 		balances[account] = balance
+	}
+
+	return balances, nil
+}
+
+func NewStateFromDisk(dataDir string, miningDifficulty uint64) (*State, error) {
+	err := InitDataDirIfNotExists(dataDir, []byte(genesisJson))
+	if err != nil {
+		return nil, err
+	}
+
+	balances, err := getInitialBalances(dataDir)
+	if err != nil {
+		return nil, err
 	}
 
 	account2nonce := make(map[common.Address]uint)
@@ -146,6 +156,30 @@ func (s *State) AddBlock(b Block) (Hash, error) {
 	s.miningDifficulty = pendingState.miningDifficulty
 
 	return blockHash, nil
+}
+
+func (s *State) ResetChain(dataDir string) error {
+
+	err := os.Truncate(getBlocksDbFilePath(dataDir), 0)
+	if err != nil {
+		return err
+	}
+
+	balances, err := getInitialBalances(dataDir)
+	if err != nil {
+		return err
+	}
+
+	s.Balances = make(map[common.Address]uint)
+	s.Account2Nonce = make(map[common.Address]uint)
+
+	s.Balances = balances
+
+	s.latestBlock = Block{}
+	s.latestBlockHash = Hash{}
+	s.hasGenesisBlock = false
+
+	return nil
 }
 
 func (s *State) NextBlockNumber() uint64 {

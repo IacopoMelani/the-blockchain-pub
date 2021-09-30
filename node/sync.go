@@ -28,7 +28,7 @@ import (
 func (n *Node) sync(ctx context.Context) error {
 	n.doSync()
 
-	ticker := time.NewTicker(45 * time.Second)
+	ticker := time.NewTicker(5 * time.Second)
 
 	for {
 		select {
@@ -117,6 +117,18 @@ func (n *Node) syncBlocks(peer PeerNode, status StatusRes) error {
 	blocks, err := fetchBlocksFromPeer(peer, n.state.LatestBlockHash())
 	if err != nil {
 		return err
+	}
+
+	// accidental forks happen when a peer has one or more blocks than us and 0 blocks are found
+	if len(blocks) == 0 {
+
+		// fetch from genesis blocks
+		blocks, err = fetchBlocksFromPeer(peer, database.Hash{})
+		if err != nil {
+			return err
+		}
+
+		n.resetChain()
 	}
 
 	for _, block := range blocks {
