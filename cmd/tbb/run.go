@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/IacopoMelani/the-blockchain-bar/database"
-	"github.com/IacopoMelani/the-blockchain-bar/node"
+	"github.com/IacopoMelani/the-blockchain-pub/database"
+	"github.com/IacopoMelani/the-blockchain-pub/node"
 	"github.com/spf13/cobra"
 )
 

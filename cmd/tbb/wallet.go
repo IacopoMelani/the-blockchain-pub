@@ -24,9 +24,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/IacopoMelani/the-blockchain-bar/database"
-	"github.com/IacopoMelani/the-blockchain-bar/node"
-	"github.com/IacopoMelani/the-blockchain-bar/wallet"
+	"github.com/IacopoMelani/the-blockchain-pub/database"
+	"github.com/IacopoMelani/the-blockchain-pub/node"
+	"github.com/IacopoMelani/the-blockchain-pub/wallet"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/cmd/utils"
