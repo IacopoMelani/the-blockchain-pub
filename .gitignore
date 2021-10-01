@@ -2,6 +2,7 @@
 /.vscode
 
 *.exe
+tbb
+tbb.exe~
 
 tbb-data*
-tbb

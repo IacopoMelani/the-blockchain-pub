@@ -232,7 +232,7 @@ func fetchBlocksFromPeer(peer PeerNode, fromBlock database.Hash) ([]database.Blo
 	fmt.Printf("Importing blocks from Peer %s...\n", peer.TcpAddress())
 
 	url := fmt.Sprintf(
-		"%s://%s%s?%s=%s&%s=%s",
+		"%s://%s%s?%s=%s&%s=%s&%s=%d",
 		peer.ApiProtocol(),
 		peer.TcpAddress(),
 		endpointSync,
@@ -240,6 +240,8 @@ func fetchBlocksFromPeer(peer PeerNode, fromBlock database.Hash) ([]database.Blo
 		fromBlock.Hex(),
 		endpointSyncQueryKeyMode,
 		endpointSyncQueryKeyModeAfter,
+		endpointSyncQueryKeyLast,
+		100,
 	)
 
 	res, err := http.Get(url)

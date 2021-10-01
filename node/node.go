@@ -341,15 +341,16 @@ func (n *Node) AddPendingTX(tx database.SignedTx, fromPeer PeerNode) error {
 		return err
 	}
 
-	err = n.validateTxBeforeAddingToMempool(tx)
-	if err != nil {
-		return err
-	}
-
 	_, isAlreadyPending := n.pendingTXs[txHash.Hex()]
 	_, isArchived := n.archivedTXs[txHash.Hex()]
 
 	if !isAlreadyPending && !isArchived {
+
+		err = n.validateTxBeforeAddingToMempool(tx)
+		if err != nil {
+			return err
+		}
+
 		fmt.Printf("Added Pending TX %s from Peer %s\n", txJson, fromPeer.TcpAddress())
 		n.pendingTXs[txHash.Hex()] = tx
 		n.newPendingTXs <- tx

@@ -35,6 +35,8 @@ const flagBootstrapIp = "bootstrap-ip"
 const flagBootstrapPort = "bootstrap-port"
 const flagAmount = "amount"
 const flagToAddress = "to"
+const flagPassword = "pwd"
+const flagConfirm = "confirm"
 
 func main() {
 	var tbbCmd = &cobra.Command{
@@ -72,6 +74,14 @@ func addAmountFlag(cmd *cobra.Command) {
 
 func addToAddressFlag(cmd *cobra.Command) {
 	cmd.Flags().String(flagToAddress, "", "Address to send the funds to")
+}
+
+func addPwdFlag(cmd *cobra.Command) {
+	cmd.Flags().String(flagPassword, "", "Password to unlock the keystore, use with caution")
+}
+
+func addConfirmFlag(cmd *cobra.Command) {
+	cmd.Flags().Bool(flagConfirm, false, "Confirm the action")
 }
 
 func getDataDirFromCmd(cmd *cobra.Command) string {

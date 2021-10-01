@@ -112,7 +112,11 @@ func walletSendTransaction() *cobra.Command {
 		Short: "Sends a transaction to the blockchain.",
 		Run: func(cmd *cobra.Command, args []string) {
 			ksFile, _ := cmd.Flags().GetString(flagKeystoreFile)
-			password := getPassPhrase("Please enter a password to decrypt the wallet:", false)
+
+			password, _ := cmd.Flags().GetString(flagPassword)
+			if password == "" {
+				password = getPassPhrase("Please enter a password to decrypt the wallet:", false)
+			}
 
 			keyJson, err := ioutil.ReadFile(ksFile)
 			if err != nil {
@@ -169,6 +173,29 @@ func walletSendTransaction() *cobra.Command {
 				os.Exit(1)
 			}
 
+			txHash, err := signedTx.Hash()
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
+
+			fmt.Printf("\nSending transaction: %s 🚀🚀🚀\n", txHash.Hex())
+			fmt.Printf("\tAmount: '%v'\n", signedTx.Value)
+			fmt.Printf("\tTo: '%v'\n", signedTx.To.Hex())
+			fmt.Printf("\tFees: '%v'\n", database.TxFee)
+
+			if confirm, _ := cmd.Flags().GetBool(flagConfirm); !confirm {
+
+				fmt.Println("\n\nConfirm transaction? (y/n)")
+				var confirm string
+				fmt.Scanln(&confirm)
+
+				if confirm != "y" {
+					fmt.Println("\n\nAborting transaction...")
+					os.Exit(0)
+				}
+			}
+
 			rawBytes, err := rlp.EncodeToBytes(signedTx)
 			if err != nil {
 				fmt.Println(err.Error())
@@ -176,8 +203,6 @@ func walletSendTransaction() *cobra.Command {
 			}
 
 			rawTx := hexutil.Encode(rawBytes)
-
-			fmt.Printf("Signed transaction: %s\n", rawTx)
 
 			fmt.Printf("Sending transaction to the blockchain...\n")
 
@@ -196,6 +221,8 @@ func walletSendTransaction() *cobra.Command {
 	addKeystoreFlag(cmd)
 	addToAddressFlag(cmd)
 	addAmountFlag(cmd)
+	addPwdFlag(cmd)
+	addConfirmFlag(cmd)
 
 	return cmd
 }
