@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/IacopoMelani/the-blockchain-bar/database"
+	"github.com/IacopoMelani/the-blockchain-pub/database"
 	"github.com/ethereum/go-ethereum/common"
 )
 

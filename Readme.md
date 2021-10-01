@@ -1,53 +1,55 @@
 # The Blockchain Bar
 
-Table of Contents
-=================
+# Table of Contents
 
-   * [TBB Training Ledger](#tbb-training-ledger)
-      * [Sneak peek to Chapter 13](#sneak-peek-to-chapter-13)
-         * [1/4 Check the current blockchain network status](#14-check-the-current-blockchain-network-status)
-         * [2/4 Download the pre-compiled blockchain program](#24-download-the-pre-compiled-blockchain-program)
-            * [Install](#install)
-               * [Download](#download)
-                  * [Linux](#linux)
-                  * [MacOS](#macos)
-               * [Verify the version](#verify-the-version)
-         * [3/4 Connect to the training network](#34-connect-to-the-training-network)
-         * [4/4 Check the current blockchain network status](#44-check-the-current-blockchain-network-status)
-   * [Introduction](#introduction)
-      * [How?](#how)
-      * [What will you build?](#what-will-you-build)
-         * [1) You will build a peer-to-peer system from scratch](#1-you-will-build-a-peer-to-peer-system-from-scratch)
-         * [2) You will secure the system with a day-to-day practical cryptography](#2-you-will-secure-the-system-with-a-day-to-day-practical-cryptography)
-         * [3) You will implement Bitcoin, Ethereum and XRP backend components](#3-you-will-implement-bitcoin-ethereum-and-xrp-backend-components)
-         * [4) You will write unit tests and integration tests for all core components](#4-you-will-write-unit-tests-and-integration-tests-for-all-core-components)
-      * [How to use this repository](#how-to-use-this-repository)
-      * [Installation](#installation)
-      * [Getting started](#getting-started)
-   * [Usage](#usage)
-      * [Install](#install-1)
-      * [CLI](#cli)
-         * [Show available commands and flags](#show-available-commands-and-flags)
-            * [Show available run settings](#show-available-run-settings)
-         * [Run a TBB node connected to the official book's test network](#run-a-tbb-node-connected-to-the-official-books-test-network)
-         * [Run a TBB bootstrap node in isolation, on your localhost only](#run-a-tbb-bootstrap-node-in-isolation-on-your-localhost-only)
-            * [Run a second TBB node connecting to your first one](#run-a-second-tbb-node-connecting-to-your-first-one)
-         * [Create a new account](#create-a-new-account)
-      * [HTTP](#http)
-         * [List all balances](#list-all-balances)
-         * [Send a signed TX](#send-a-signed-tx)
-         * [Check node's status (latest block, known peers, pending TXs)](#check-nodes-status-latest-block-known-peers-pending-txs)
-      * [Tests](#tests)
-   * [Start](#start)
-      * [Tutorial](#tutorial)
-   * [Finish](#finish)
-      * [Request 1000 TBB testing tokens](#request-1000-tbb-testing-tokens)
+- [TBB Training Ledger](#tbb-training-ledger)
+  - [Sneak peek to Chapter 13](#sneak-peek-to-chapter-13)
+    - [1/4 Check the current blockchain network status](#14-check-the-current-blockchain-network-status)
+    - [2/4 Download the pre-compiled blockchain program](#24-download-the-pre-compiled-blockchain-program)
+      - [Install](#install)
+        - [Download](#download)
+          - [Linux](#linux)
+          - [MacOS](#macos)
+        - [Verify the version](#verify-the-version)
+    - [3/4 Connect to the training network](#34-connect-to-the-training-network)
+    - [4/4 Check the current blockchain network status](#44-check-the-current-blockchain-network-status)
+- [Introduction](#introduction)
+  - [How?](#how)
+  - [What will you build?](#what-will-you-build)
+    - [1) You will build a peer-to-peer system from scratch](#1-you-will-build-a-peer-to-peer-system-from-scratch)
+    - [2) You will secure the system with a day-to-day practical cryptography](#2-you-will-secure-the-system-with-a-day-to-day-practical-cryptography)
+    - [3) You will implement Bitcoin, Ethereum and XRP backend components](#3-you-will-implement-bitcoin-ethereum-and-xrp-backend-components)
+    - [4) You will write unit tests and integration tests for all core components](#4-you-will-write-unit-tests-and-integration-tests-for-all-core-components)
+  - [How to use this repository](#how-to-use-this-repository)
+  - [Installation](#installation)
+  - [Getting started](#getting-started)
+- [Usage](#usage)
+  - [Install](#install-1)
+  - [CLI](#cli)
+    - [Show available commands and flags](#show-available-commands-and-flags)
+      - [Show available run settings](#show-available-run-settings)
+    - [Run a TBB node connected to the official book's test network](#run-a-tbb-node-connected-to-the-official-books-test-network)
+    - [Run a TBB bootstrap node in isolation, on your localhost only](#run-a-tbb-bootstrap-node-in-isolation-on-your-localhost-only)
+      - [Run a second TBB node connecting to your first one](#run-a-second-tbb-node-connecting-to-your-first-one)
+    - [Create a new account](#create-a-new-account)
+  - [HTTP](#http)
+    - [List all balances](#list-all-balances)
+    - [Send a signed TX](#send-a-signed-tx)
+    - [Check node's status (latest block, known peers, pending TXs)](#check-nodes-status-latest-block-known-peers-pending-txs)
+  - [Tests](#tests)
+- [Start](#start)
+  - [Tutorial](#tutorial)
+- [Finish](#finish)
+  - [Request 1000 TBB testing tokens](#request-1000-tbb-testing-tokens)
 
 # TBB Training Ledger
+
 ## Sneak peek to Chapter 13
+
 You will build all of this from scratch! Follow the next 4 steps and you will be connected to the TBB testing blockchain network in 30 seconds.
 
 ### 1/4 Check the current blockchain network status
+
 Go ahead. Try it right now! :cupid:
 
 ```bash
@@ -62,25 +64,30 @@ curl https://node.tbb.web3.coach/balances/list | jq
 
 ```json
 {
-  "block_hash": "000000a9d18730c133869d175a886d576df5675e0e73900bf072c59047b9d734",
-  "balances": {
-    "0x09ee50f2f37fcba1845de6fe5c762e83e65e755c": 1000095,
-    "0x22ba1f80452e6220c7cc6ea2d1e3eeddac5f694a": 5
-  }
+	"block_hash": "000000a9d18730c133869d175a886d576df5675e0e73900bf072c59047b9d734",
+	"balances": {
+		"0x09ee50f2f37fcba1845de6fe5c762e83e65e755c": 1000095,
+		"0x22ba1f80452e6220c7cc6ea2d1e3eeddac5f694a": 5
+	}
 }
 ```
 
 ### 2/4 Download the pre-compiled blockchain program
+
 Together with all students, we will use this custom build blockchain for educational purposes.
 
 #### Install
+
 ##### Download
+
 ###### Linux
+
 ```bash
-wget "https://github.com/IacopoMelani/the-blockchain-bar/releases/download/1.3.2-alpha/tbb-linux-amd64" -O /usr/local/bin/tbb
+wget "https://github.com/IacopoMelani/the-blockchain-pub/releases/download/1.3.2-alpha/tbb-linux-amd64" -O /usr/local/bin/tbb
 ```
 
 ##### Verify the version
+
 ```bash
 chmod a+x /usr/local/bin/tbb
 tbb version
@@ -89,11 +96,13 @@ tbb version
 ```
 
 ### 3/4 Connect to the training network from localhost
+
 ```bash
 tbb run --datadir=$HOME/.tbb --ip=127.0.0.1 --port=8081 --disable-ssl
 ```
 
 Your blockchain database will synchronize with rest of the students.
+
 ```json
 Launching TBB node and its HTTP API...
 Listening on: 127.0.0.1:8081
@@ -114,6 +123,7 @@ Searching for new Peers, Blocks: 'node.tbb.web3.coach'
 ```
 
 ### 4/4 Check the current blockchain network status
+
 This time from your OWN, fully synchronized blockchain node running directly on your computer.
 
 ```bash
@@ -122,11 +132,11 @@ curl -X GET http://127.0.0.1:8081/balances/list | jq
 
 ```json
 {
-  "block_hash": "000000a9d18730c133869d175a886d576df5675e0e73900bf072c59047b9d734",
-  "balances": {
-    "0x09ee50f2f37fcba1845de6fe5c762e83e65e755c": 1000095,
-    "0x22ba1f80452e6220c7cc6ea2d1e3eeddac5f694a": 5
-  }
+	"block_hash": "000000a9d18730c133869d175a886d576df5675e0e73900bf072c59047b9d734",
+	"balances": {
+		"0x09ee50f2f37fcba1845de6fe5c762e83e65e755c": 1000095,
+		"0x22ba1f80452e6220c7cc6ea2d1e3eeddac5f694a": 5
+	}
 }
 ```
 
@@ -142,7 +152,7 @@ With Web 3.0 and blockchain becoming more mainstream every day, do you know what
 
 Forget everything you've heard about blockchain from social media. Now, you will build a blockchain system from ground zero to really understand the ins and outs of this peer-to-peer, distributed technology.
 
-Afterwards, make your own mind up about its future, advantages and shortcomings. 
+Afterwards, make your own mind up about its future, advantages and shortcomings.
 
 Spoiler alert: you will fall in love with programming blockchain software. :smiling_imp:
 
@@ -174,7 +184,7 @@ No boring theory. Only modern practices.
 
 ![elliptic curve cryptography](public/img/andrej_babayaga_crypto_sign_summary.png)
 
-### 3) You will implement Bitcoin, Ethereum and XRP backend components 
+### 3) You will implement Bitcoin, Ethereum and XRP backend components
 
 From diagrams of mining algorithms to actual, implemented and working crypto wallets for storing the mined tokens and all other fundamental components that make blockchain special.
 
@@ -187,6 +197,7 @@ You will test your cryptographic functions, a Bitcoin's like Proof of Work minin
 ![ethereum signature](public/img/test_ethereum_signature.png)
 
 ## How to use this repository
+
 Every eBook chapter has a dedicated branch where you can experiment with the code first-hand.
 
 ```git
@@ -214,6 +225,7 @@ git branch
 [Open instructions.](./Installation.md)
 
 ## Getting started
+
 1. Download the eBook from: [https://gumroad.com/l/build-a-blockchain-from-scratch-in-go](https://gumroad.com/l/build-a-blockchain-from-scratch-in-go)
 1. Open the book at Chapter 1
 1. Checkout the first chapter's branch `c1_genesis_json`
@@ -227,17 +239,21 @@ git checkout c1_genesis_json
 # Usage
 
 ## Install
+
 ```
 go install ./cmd/...
 ```
 
 ## CLI
+
 ### Show available commands and flags
+
 ```bash
 tbb help
 ```
 
 #### Show available run settings
+
 ```bash
 tbb run --help
 
@@ -258,7 +274,8 @@ Flags:
       --port uint                  your node's public HTTP port for communication with other peers (configurable if SSL is disabled) (default 443)
 ```
 
-### Run a TBB node connected to the official book's test network 
+### Run a TBB node connected to the official book's test network
+
 If you are running the node on your localhost, disable the SSL with `--disable-ssl` flag.
 
 ```
@@ -269,24 +286,29 @@ tbb run --datadir=$HOME/.tbb --ip=127.0.0.1 --port=8081 --miner=0x_YOUR_WALLET_A
 ```
 
 ### Run a TBB bootstrap node in isolation, on your localhost only
+
 ```
 tbb run --datadir=$HOME/.tbb_boostrap --ip=127.0.0.1 --port=8080 --bootstrap-ip=127.0.0.1 --bootstrap-port=8080 --disable-ssl
 ```
 
 #### Run a second TBB node connecting to your first one
+
 ```
 tbb run --datadir=$HOME/.tbb --ip=127.0.0.1 --port=8081 --bootstrap-ip=127.0.0.1 --bootstrap-port=8080 --disable-ssl
 ```
 
 ### Create a new account
+
 ```
-tbb wallet new-account --datadir=$HOME/.tbb 
+tbb wallet new-account --datadir=$HOME/.tbb
 ```
 
 ### Run a TBB node with SSL
+
 The default node's HTTP port is 443. The SSL certificate is generated automatically as long as the DNS A/AAAA records point at your server.
 
 #### Official Testing Bootstrap Server
+
 Example how the official TBB bootstrap node is launched. Customize the `--datadir`, `--miner`, and `--ip` values to match your server.
 
 ```bash
@@ -294,12 +316,15 @@ Example how the official TBB bootstrap node is launched. Customize the `--datadi
 ```
 
 ## HTTP
+
 ### List all balances
+
 ```
 curl http://localhost:8080/balances/list | jq
 ```
 
 ### Send a signed TX
+
 ```
 curl --location --request POST 'http://localhost:8080/tx/add' \
 --header 'Content-Type: application/json' \
@@ -312,17 +337,21 @@ curl --location --request POST 'http://localhost:8080/tx/add' \
 ```
 
 ### Check node's status (latest block, known peers, pending TXs)
+
 ```
 curl http://localhost:8080/node/status | jq
 ```
 
 ## Tests
+
 Run all tests with verbosity but one at a time, without timeout, to avoid ports collisions:
+
 ```
 go test -v -p=1 -timeout=0 ./...
 ```
 
 Run an individual test:
+
 ```
 go test -timeout=0 ./node -test.v -test.run ^TestNode_Mining$
 ```
@@ -330,11 +359,13 @@ go test -timeout=0 ./node -test.v -test.run ^TestNode_Mining$
 **Note:** Majority are integration tests and take time. Expect the test suite to finish in ~30 mins.
 
 # Start
+
 ## Tutorial
 
-:books: Get the eBook from: [https://gumroad.com/l/build-a-blockchain-from-scratch-in-go](https://gumroad.com/l/build-a-blockchain-from-scratch-in-go) 
+:books: Get the eBook from: [https://gumroad.com/l/build-a-blockchain-from-scratch-in-go](https://gumroad.com/l/build-a-blockchain-from-scratch-in-go)
 
 # Finish
+
 ## Request 1000 TBB testing tokens
 
 Write a tweet and let me know how did you like this book! Tag me in it [@Web3Coach](https://twitter.com/Web3Coach) and include your account address 0xYOUR_ADDRESS.
@@ -342,6 +373,7 @@ Write a tweet and let me know how did you like this book! Tag me in it [@Web3Coa
 See you on Twitter - [@Web3Coach.](https://twitter.com/Web3Coach)
 
 # License
+
 The the-blockchain-bar library (i.e. all code outside of the cmd directory) is licensed under the GNU Lesser General Public License v3.0, also included in our repository in the COPYING.LESSER file.
 
 The the-blockchain-bar binaries (i.e. all code inside of the cmd directory) is licensed under the GNU General Public License v3.0, also included in our repository in the COPYING file.

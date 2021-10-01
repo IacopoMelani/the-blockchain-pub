@@ -28,9 +28,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/IacopoMelani/the-blockchain-bar/database"
-	"github.com/IacopoMelani/the-blockchain-bar/fs"
-	"github.com/IacopoMelani/the-blockchain-bar/wallet"
+	"github.com/IacopoMelani/the-blockchain-pub/database"
+	"github.com/IacopoMelani/the-blockchain-pub/fs"
+	"github.com/IacopoMelani/the-blockchain-pub/wallet"
 )
 
 // The password for testing keystore files:

@@ -22,7 +22,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/IacopoMelani/the-blockchain-bar/database"
+	"github.com/IacopoMelani/the-blockchain-pub/database"
 )
 
 func (n *Node) sync(ctx context.Context) error {

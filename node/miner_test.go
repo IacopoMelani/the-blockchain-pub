@@ -24,8 +24,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/IacopoMelani/the-blockchain-bar/database"
-	"github.com/IacopoMelani/the-blockchain-bar/wallet"
+	"github.com/IacopoMelani/the-blockchain-pub/database"
+	"github.com/IacopoMelani/the-blockchain-pub/wallet"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )

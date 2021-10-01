@@ -24,8 +24,8 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/IacopoMelani/the-blockchain-bar/database"
-	"github.com/IacopoMelani/the-blockchain-bar/fs"
+	"github.com/IacopoMelani/the-blockchain-pub/database"
+	"github.com/IacopoMelani/the-blockchain-pub/fs"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"

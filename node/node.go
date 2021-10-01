@@ -27,7 +27,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
-	"github.com/IacopoMelani/the-blockchain-bar/database"
+	"github.com/IacopoMelani/the-blockchain-pub/database"
 )
 
 const DefaultBootstrapIp = "node.tbb.web3.coach"
