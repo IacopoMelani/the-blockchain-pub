@@ -1,4 +1,4 @@
-module github.com/IacopoMelani/the-blockchain-bar
+module github.com/IacopoMelani/the-blockchain-pub
 
 go 1.17
 
