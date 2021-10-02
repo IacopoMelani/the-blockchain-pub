@@ -1,8 +1,45 @@
 _type: export
 __export_format: 4
-__export_date: 2021-09-30T17:11:46.128Z
+__export_date: 2021-10-02T10:21:36.705Z
 __export_source: insomnia.desktop.app:v2021.5.3
 resources:
+  - _id: req_069d356213ff4ea992bce79a23795b3d
+    parentId: wrk_8791fa43eab54daab58daccc0d50c01f
+    modified: 1633170056311
+    created: 1633170028604
+    url: http://localhost:{{ _.port }}/address/balance
+    name: Balance
+    description: ""
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"account": "0x50543e830590fd03a0301faa0164d731f0e2ff7d"
+        }
+    parameters: []
+    headers:
+      - name: Content-Type
+        value: application/json
+        id: pair_08eb107ee5fc474881dd9746e6645f0b
+    authentication: {}
+    metaSortKey: -1633170028605
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+  - _id: wrk_8791fa43eab54daab58daccc0d50c01f
+    parentId: null
+    modified: 1632919512950
+    created: 1632825862819
+    name: the-blockchain-bar
+    description: ""
+    scope: collection
+    _type: workspace
   - _id: req_f078ed5b69544aeeace76ccfbbe0127d
     parentId: wrk_8791fa43eab54daab58daccc0d50c01f
     modified: 1633020248664
@@ -24,14 +61,6 @@ resources:
     settingRebuildPath: true
     settingFollowRedirects: global
     _type: request
-  - _id: wrk_8791fa43eab54daab58daccc0d50c01f
-    parentId: null
-    modified: 1632919512950
-    created: 1632825862819
-    name: the-blockchain-bar
-    description: ""
-    scope: collection
-    _type: workspace
   - _id: req_cb47c1b0c33a463aabd83223449fc20e
     parentId: wrk_8791fa43eab54daab58daccc0d50c01f
     modified: 1633020244284
@@ -175,11 +204,11 @@ resources:
     _type: api_spec
   - _id: env_41ab6ae47ac0417fb21243b9e1d09c0b
     parentId: env_c0955d89d9817d33ce00ff57471924c2b0285b6f
-    modified: 1633020162409
+    modified: 1633118511590
     created: 1633020127320
     name: Bootstrap
     data:
-      port: 8111
+      port: 8110
     dataPropertyOrder:
       "&":
         - port

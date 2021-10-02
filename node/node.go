@@ -57,7 +57,9 @@ const endpointAddPeerQueryKeyPort = "port"
 const endpointAddPeerQueryKeyMiner = "miner"
 const endpointAddPeerQueryKeyVersion = "version"
 
-const endpointNextNonce = "/node/nonce/next"
+const endpointNextNonce = "/address/nonce/next"
+
+const endtpointAddressBalance = "/address/balance"
 
 const miningIntervalSeconds = 10
 const DefaultMiningDifficulty = 2
@@ -173,6 +175,10 @@ func (n *Node) serveHttp(ctx context.Context, isSSLDisabled bool, sslEmail strin
 
 	e.GET(endpointBalancesList, func(c echo.Context) error {
 		return listBalancesHandler(c, n)
+	})
+
+	e.POST(endtpointAddressBalance, func(c echo.Context) error {
+		return addressBalanceHandler(c, n)
 	})
 
 	e.POST(endpointTxAdd, func(c echo.Context) error {

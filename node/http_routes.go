@@ -31,6 +31,14 @@ type ErrRes struct {
 	Error string `json:"error"`
 }
 
+type BalanceReq struct {
+	Account string `json:"account"`
+}
+
+type BalanceRes struct {
+	Balance uint `json:"balance"`
+}
+
 type BalancesRes struct {
 	Hash     database.Hash           `json:"block_hash"`
 	Balances map[common.Address]uint `json:"balances"`
@@ -68,6 +76,19 @@ type SyncRes struct {
 type AddPeerRes struct {
 	Success bool   `json:"success"`
 	Error   string `json:"error"`
+}
+
+func addressBalanceHandler(c echo.Context, node *Node) error {
+
+	req := BalanceReq{}
+	err := readReq(c.Request(), &req)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrRes{err.Error()})
+	}
+
+	balances := node.state.GetAccountBalance(database.NewAccount(req.Account))
+
+	return c.JSON(http.StatusOK, BalanceRes{balances})
 }
 
 func listBalancesHandler(c echo.Context, node *Node) error {

@@ -197,6 +197,10 @@ func (s *State) LatestBlockHash() Hash {
 	return s.latestBlockHash
 }
 
+func (s *State) GetAccountBalance(account common.Address) uint {
+	return s.Balances[account]
+}
+
 func (s *State) GetNextAccountNonce(account common.Address) uint {
 	return s.Account2Nonce[account] + 1
 }
