@@ -64,6 +64,11 @@ func SignTxWithKeystoreAccount(tx database.Tx, acc common.Address, pwd, keystore
 		return database.SignedTx{}, err
 	}
 
+	return SignTxWithKey(tx, key)
+}
+
+func SignTxWithKey(tx database.Tx, key *keystore.Key) (database.SignedTx, error) {
+
 	signedTx, err := SignTx(tx, key.PrivateKey)
 	if err != nil {
 		return database.SignedTx{}, err
