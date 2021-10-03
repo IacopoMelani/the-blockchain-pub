@@ -28,7 +28,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 )
 
 const keystoreDirName = "keystore"
@@ -114,7 +114,11 @@ func NewRandomKey() (*keystore.Key, error) {
 		return nil, err
 	}
 
-	id := uuid.NewRandom()
+	id, err := uuid.NewUUID()
+	if err != nil {
+		return nil, err
+	}
+
 	key := &keystore.Key{
 		Id:         id,
 		Address:    crypto.PubkeyToAddress(privateKeyECDSA.PublicKey),
