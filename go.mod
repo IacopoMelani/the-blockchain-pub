@@ -2,6 +2,13 @@ module github.com/IacopoMelani/the-blockchain-pub
 
 go 1.17
 
+retract (
+    v0.0.0    // Published accidentally.
+    v0.0.0-0  // Published accidentally.
+    v0.0.0-1  // Published accidentally.
+    v0.0.0-2  // Published accidentally.
+)
+
 require (
 	github.com/btcsuite/btcd v0.22.0-beta // indirect
 	github.com/caddyserver/certmagic v0.15.0
