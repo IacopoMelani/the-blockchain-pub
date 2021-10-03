@@ -1,11 +1,11 @@
 _type: export
 __export_format: 4
-__export_date: 2021-10-02T10:21:36.705Z
+__export_date: 2021-10-03T12:21:58.925Z
 __export_source: insomnia.desktop.app:v2021.5.3
 resources:
   - _id: req_069d356213ff4ea992bce79a23795b3d
     parentId: wrk_8791fa43eab54daab58daccc0d50c01f
-    modified: 1633170056311
+    modified: 1633171099904
     created: 1633170028604
     url: http://localhost:{{ _.port }}/address/balance
     name: Balance
@@ -63,9 +63,9 @@ resources:
     _type: request
   - _id: req_cb47c1b0c33a463aabd83223449fc20e
     parentId: wrk_8791fa43eab54daab58daccc0d50c01f
-    modified: 1633020244284
+    modified: 1633263692343
     created: 1632917924040
-    url: http://localhost:{{ _.port }}/node/nonce/next
+    url: http://localhost:{{ _.port }}/address/nonce/next
     name: Next Nonce
     description: ""
     method: POST
@@ -73,7 +73,7 @@ resources:
       mimeType: application/json
       text: |-
         {
-        	"account": "<ADDRESS>"
+        	"account": "0x50543e830590fd03a0301faa0164d731f0e2ff7d"
         }
     parameters: []
     headers:
