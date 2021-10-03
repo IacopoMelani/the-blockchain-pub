@@ -150,7 +150,7 @@ func walletSendTransaction() *cobra.Command {
 				}
 			}
 
-			nextNonceRawBody, err := makeRequest("http://localhost:8111/node/nonce/next", "POST", map[string]interface{}{
+			nextNonceRawBody, err := makeRequest("http://localhost:8110/node/nonce/next", "POST", map[string]interface{}{
 				"account": key.Address.Hex(),
 			})
 			if err != nil {
@@ -206,7 +206,7 @@ func walletSendTransaction() *cobra.Command {
 
 			fmt.Printf("Sending transaction to the blockchain...\n")
 
-			body, err := makeRequest("http://localhost:8111/tx/add", "POST", map[string]interface{}{
+			body, err := makeRequest("http://localhost:8110/tx/add", "POST", map[string]interface{}{
 				"tx": rawTx,
 			})
 			if err != nil {
