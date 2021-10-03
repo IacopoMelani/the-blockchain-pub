@@ -61,6 +61,8 @@ const endpointNextNonce = "/address/nonce/next"
 
 const endtpointAddressBalance = "/address/balance"
 
+const endpointAddressTransactions = "/address/transactions"
+
 const miningIntervalSeconds = 10
 const DefaultMiningDifficulty = 2
 
@@ -199,6 +201,10 @@ func (n *Node) serveHttp(ctx context.Context, isSSLDisabled bool, sslEmail strin
 
 	e.POST(endpointNextNonce, func(c echo.Context) error {
 		return nextNonceHandler(c, n)
+	})
+
+	e.POST(endpointAddressTransactions, func(c echo.Context) error {
+		return transactionsHandler(c, n)
 	})
 
 	if isSSLDisabled {
@@ -410,4 +416,55 @@ func (n *Node) getPendingTXsAsArray() []database.SignedTx {
 	}
 
 	return txs
+}
+
+func (n *Node) GetPendingTXsAsArrayByAccount(acc common.Address) []database.SignedTx {
+	txs := make([]database.SignedTx, 0)
+
+	for _, tx := range n.pendingTXs {
+		if tx.From == acc {
+			txs = append(txs, tx)
+		}
+	}
+
+	return txs
+}
+
+func (n *Node) GetTxsByAccountAndType(account common.Address, txType string, last int) ([]database.SignedTx, error) {
+
+	txs := make([]database.SignedTx, 0)
+	count := 0
+
+	blocks, err := database.GetBlocksBefore(n.LatestBlockHash(), int64(n.state.LatestBlock().Header.Number), n.dataDir)
+	if err != nil {
+		return nil, err
+	}
+
+loopBlocks:
+	for _, block := range blocks {
+
+		for _, tx := range block.Value.TXs {
+
+			switch txType {
+			case "in":
+				if tx.To == account {
+					txs = append(txs, tx)
+					count++
+
+				}
+			case "out":
+				if tx.From == account {
+					txs = append(txs, tx)
+					count++
+
+				}
+			}
+
+			if last > 0 && count >= last {
+				break loopBlocks
+			}
+		}
+	}
+
+	return txs, nil
 }

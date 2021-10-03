@@ -78,6 +78,54 @@ type AddPeerRes struct {
 	Error   string `json:"error"`
 }
 
+const TxTypeIn = "in"
+const TxTypeOut = "out"
+const TxTypePending = "pending"
+
+type TransactionsReq struct {
+	Account string `json:"account"`
+	TxType  string `json:"type"`
+	Last    int    `json:"last"`
+}
+
+func transactionsHandler(c echo.Context, node *Node) error {
+
+	req := TransactionsReq{}
+	err := readReq(c.Request(), &req)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrRes{err.Error()})
+	}
+
+	if req.Account == "" {
+		return c.JSON(http.StatusBadRequest, ErrRes{"account is required"})
+	}
+
+	if req.TxType == "" {
+		req.TxType = TxTypeIn
+	}
+
+	txs := make([]database.SignedTx, 0)
+
+	switch req.TxType {
+	case TxTypeIn:
+		txs, err = node.GetTxsByAccountAndType(database.NewAccount(req.Account), TxTypeIn, req.Last)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, ErrRes{err.Error()})
+		}
+	case TxTypeOut:
+		txs, err = node.GetTxsByAccountAndType(database.NewAccount(req.Account), TxTypeOut, req.Last)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, ErrRes{err.Error()})
+		}
+	case TxTypePending:
+		txs = node.GetPendingTXsAsArrayByAccount(database.NewAccount(req.Account))
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"transactions": txs,
+	})
+}
+
 func addressBalanceHandler(c echo.Context, node *Node) error {
 
 	req := BalanceReq{}
