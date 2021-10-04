@@ -104,25 +104,32 @@ func transactionsHandler(c echo.Context, node *Node) error {
 		req.TxType = TxTypeIn
 	}
 
-	txs := make([]database.SignedTx, 0)
+	txs := make([]database.SignedTxExtended, 0)
 
 	switch req.TxType {
 	case TxTypeIn:
 		txs, err = node.GetTxsByAccountAndType(database.NewAccount(req.Account), TxTypeIn, req.Last)
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, ErrRes{err.Error()})
+			return c.JSON(http.StatusInternalServerError, ErrRes{err.Error()})
 		}
 	case TxTypeOut:
 		txs, err = node.GetTxsByAccountAndType(database.NewAccount(req.Account), TxTypeOut, req.Last)
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, ErrRes{err.Error()})
+			return c.JSON(http.StatusInternalServerError, ErrRes{err.Error()})
 		}
 	case TxTypePending:
-		txs = node.GetPendingTXsAsArrayByAccount(database.NewAccount(req.Account))
+		txs, err = node.GetPendingTXsExtendedAsArrayByAccount(database.NewAccount(req.Account))
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, ErrRes{err.Error()})
+		}
 	}
 
+	sortedTxs := database.SignedTxsExtended(txs)
+
+	sortedTxs.Sort()
+
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"transactions": txs,
+		"transactions": sortedTxs,
 	})
 }
 
@@ -179,7 +186,7 @@ func nextNonceHandler(c echo.Context, node *Node) error {
 		return c.JSON(http.StatusBadRequest, ErrRes{err.Error()})
 	}
 
-	nonce := node.state.GetNextAccountNonce(database.NewAccount(req.Account))
+	nonce := node.pendingState.GetNextAccountNonce(database.NewAccount(req.Account))
 
 	return c.JSON(http.StatusOK, NextNonceRes{Nonce: nonce})
 }

@@ -418,21 +418,25 @@ func (n *Node) getPendingTXsAsArray() []database.SignedTx {
 	return txs
 }
 
-func (n *Node) GetPendingTXsAsArrayByAccount(acc common.Address) []database.SignedTx {
-	txs := make([]database.SignedTx, 0)
+func (n *Node) GetPendingTXsExtendedAsArrayByAccount(acc common.Address) ([]database.SignedTxExtended, error) {
+	txs := make([]database.SignedTxExtended, 0)
 
 	for _, tx := range n.pendingTXs {
 		if tx.From == acc {
-			txs = append(txs, tx)
+			txExtended, err := database.NewSignedTxExtended(tx, database.Block{})
+			if err != nil {
+				return nil, err
+			}
+			txs = append(txs, txExtended)
 		}
 	}
 
-	return txs
+	return txs, nil
 }
 
-func (n *Node) GetTxsByAccountAndType(account common.Address, txType string, last int) ([]database.SignedTx, error) {
+func (n *Node) GetTxsByAccountAndType(account common.Address, txType string, last int) ([]database.SignedTxExtended, error) {
 
-	txs := make([]database.SignedTx, 0)
+	txs := make([]database.SignedTxExtended, 0)
 	count := 0
 
 	blocks, err := database.GetBlocksBefore(n.LatestBlockHash(), int64(n.state.LatestBlock().Header.Number), n.dataDir)
@@ -448,15 +452,22 @@ loopBlocks:
 			switch txType {
 			case "in":
 				if tx.To == account {
-					txs = append(txs, tx)
+					txExtended, err := database.NewSignedTxExtended(tx, block.Value)
+					if err != nil {
+						return nil, err
+					}
+					txs = append(txs, txExtended)
 					count++
 
 				}
 			case "out":
 				if tx.From == account {
-					txs = append(txs, tx)
+					txExtended, err := database.NewSignedTxExtended(tx, block.Value)
+					if err != nil {
+						return nil, err
+					}
+					txs = append(txs, txExtended)
 					count++
-
 				}
 			}
 

@@ -43,12 +43,32 @@ type SignedTx struct {
 	Sig []byte `json:"signature"`
 }
 
+type SignedTxExtended struct {
+	SignedTx  `json:"tx"`
+	TxHash    Hash `json:"hash"`
+	BlockHash Hash `json:"block_hash"`
+}
+
+type SignedTxsExtended []SignedTxExtended
+
 func NewTx(from, to common.Address, value, nonce uint, data string) Tx {
 	return Tx{from, to, value, nonce, data, uint64(time.Now().Unix())}
 }
 
 func NewSignedTx(tx Tx, sig []byte) SignedTx {
 	return SignedTx{tx, sig}
+}
+
+func NewSignedTxExtended(tx SignedTx, block Block) (SignedTxExtended, error) {
+	txHash, err := tx.Hash()
+	if err != nil {
+		return SignedTxExtended{}, err
+	}
+	blockHash, err := block.Hash()
+	if err != nil {
+		return SignedTxExtended{}, err
+	}
+	return SignedTxExtended{tx, txHash, blockHash}, nil
 }
 
 func (t Tx) IsReward() bool {
@@ -97,4 +117,15 @@ func (t SignedTx) IsAuthentic() (bool, error) {
 	recoveredAccount := common.BytesToAddress(recoveredPubKeyBytesHash[12:])
 
 	return recoveredAccount.Hex() == t.From.Hex(), nil
+}
+
+func (txs SignedTxsExtended) Sort() {
+
+	for i := 0; i < len(txs); i++ {
+		for j := i + 1; j < len(txs); j++ {
+			if txs[i].Tx.Nonce < txs[j].Tx.Nonce {
+				txs[i], txs[j] = txs[j], txs[i]
+			}
+		}
+	}
 }
