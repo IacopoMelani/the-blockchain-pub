@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/caddyserver/certmagic"
@@ -414,6 +415,10 @@ func (n *Node) getPendingTXsAsArray() []database.SignedTx {
 		txs[i] = tx
 		i++
 	}
+
+	sort.Slice(txs, func(i, j int) bool {
+		return txs[i].Nonce < txs[j].Nonce
+	})
 
 	return txs
 }

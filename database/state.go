@@ -282,10 +282,10 @@ func applyTXs(txs []SignedTx, s *State) error {
 	copy(copyTxs, txs)
 
 	sort.Slice(copyTxs, func(i, j int) bool {
-		return copyTxs[i].Time < copyTxs[j].Time
+		return copyTxs[i].Nonce < txs[j].Nonce
 	})
 
-	for _, tx := range copyTxs {
+	for _, tx := range txs {
 		err := ApplyTx(tx, s)
 		if err != nil {
 			return err
