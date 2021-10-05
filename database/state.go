@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -276,11 +277,15 @@ func applyBlock(b Block, s *State) error {
 }
 
 func applyTXs(txs []SignedTx, s *State) error {
-	// sort.Slice(txs, func(i, j int) bool {
-	// 	return txs[i].Time < txs[j].Time
-	// })
 
-	for _, tx := range txs {
+	copyTxs := make([]SignedTx, len(txs))
+	copy(copyTxs, txs)
+
+	sort.Slice(copyTxs, func(i, j int) bool {
+		return copyTxs[i].Time < copyTxs[j].Time
+	})
+
+	for _, tx := range copyTxs {
 		err := ApplyTx(tx, s)
 		if err != nil {
 			return err
