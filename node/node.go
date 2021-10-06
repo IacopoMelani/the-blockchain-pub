@@ -357,6 +357,12 @@ func (n *Node) AddPendingTX(tx database.SignedTx, fromPeer PeerNode) error {
 	_, isAlreadyPending := n.pendingTXs[txHash.Hex()]
 	_, isArchived := n.archivedTXs[txHash.Hex()]
 
+	for _, pendingTx := range n.pendingTXs {
+		if tx.From.Hash() == pendingTx.From.Hash() && pendingTx.Nonce == tx.Nonce {
+			return fmt.Errorf("TX with same nonce already pending")
+		}
+	}
+
 	if !isAlreadyPending && !isArchived {
 
 		err = n.validateTxBeforeAddingToMempool(tx)
@@ -375,14 +381,17 @@ func (n *Node) AddPendingTX(tx database.SignedTx, fromPeer PeerNode) error {
 // addBlock is a wrapper around the n.state.AddBlock() to have a single function for changing the main state
 // from the Node perspective, so we can also reset the pending state in the same time.
 func (n *Node) addBlock(block database.Block) error {
+
+	defer func() {
+		// Reset the pending state
+		pendingState := n.state.Copy()
+		n.pendingState = &pendingState
+	}()
+
 	_, err := n.state.AddBlock(block)
 	if err != nil {
 		return err
 	}
-
-	// Reset the pending state
-	pendingState := n.state.Copy()
-	n.pendingState = &pendingState
 
 	if n.state.LatestBlock().Header.Difficulty > n.miningDifficulty {
 		n.ChangeMiningDifficulty(n.state.LatestBlock().Header.Difficulty)
