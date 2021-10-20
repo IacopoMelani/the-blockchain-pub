@@ -90,6 +90,9 @@ type TransactionsReq struct {
 
 func transactionsHandler(c echo.Context, node *Node) error {
 
+	node.RLock()
+	defer node.RUnlock()
+
 	req := TransactionsReq{}
 	err := readReq(c.Request(), &req)
 	if err != nil {
@@ -135,6 +138,9 @@ func transactionsHandler(c echo.Context, node *Node) error {
 
 func addressBalanceHandler(c echo.Context, node *Node) error {
 
+	node.RLock()
+	defer node.RUnlock()
+
 	req := BalanceReq{}
 	err := readReq(c.Request(), &req)
 	if err != nil {
@@ -147,10 +153,17 @@ func addressBalanceHandler(c echo.Context, node *Node) error {
 }
 
 func listBalancesHandler(c echo.Context, node *Node) error {
+
+	node.RLock()
+	defer node.RUnlock()
+
 	return c.JSON(http.StatusOK, BalancesRes{node.state.LatestBlockHash(), node.state.Balances})
 }
 
 func txAddHandler(c echo.Context, node *Node) error {
+
+	node.Lock()
+	defer node.Unlock()
 
 	var req TxAddReq
 
@@ -180,6 +193,9 @@ func txAddHandler(c echo.Context, node *Node) error {
 
 func nextNonceHandler(c echo.Context, node *Node) error {
 
+	node.RLock()
+	defer node.RUnlock()
+
 	req := NextNonceReq{}
 	err := readReq(c.Request(), &req)
 	if err != nil {
@@ -192,6 +208,10 @@ func nextNonceHandler(c echo.Context, node *Node) error {
 }
 
 func statusHandler(c echo.Context, node *Node) error {
+
+	node.RLock()
+	defer node.RUnlock()
+
 	return c.JSON(http.StatusOK, StatusRes{
 		Hash:        node.state.LatestBlockHash(),
 		Number:      node.state.LatestBlock().Header.Number,
@@ -203,6 +223,9 @@ func statusHandler(c echo.Context, node *Node) error {
 }
 
 func syncHandler(c echo.Context, node *Node) error {
+
+	node.RLock()
+	defer node.RUnlock()
 
 	reqHash := c.Request().URL.Query().Get(endpointSyncQueryKeyFromBlock)
 	reqMode := c.Request().URL.Query().Get(endpointSyncQueryKeyMode)
@@ -243,6 +266,9 @@ func syncHandler(c echo.Context, node *Node) error {
 }
 
 func addPeerHandler(c echo.Context, node *Node) error {
+
+	node.Lock()
+	defer node.Unlock()
 
 	r := c.Request()
 

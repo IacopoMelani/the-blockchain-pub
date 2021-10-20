@@ -22,6 +22,7 @@ import (
 	"os"
 	"reflect"
 	"sort"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -29,6 +30,8 @@ import (
 const TxFee = uint(50)
 
 type State struct {
+	sync.RWMutex
+
 	Balances      map[common.Address]uint
 	Account2Nonce map[common.Address]uint
 
@@ -77,7 +80,7 @@ func NewStateFromDisk(dataDir string, miningDifficulty uint64) (*State, error) {
 
 	scanner := bufio.NewScanner(f)
 
-	state := &State{balances, account2nonce, f, Block{}, Hash{}, false, miningDifficulty}
+	state := &State{sync.RWMutex{}, balances, account2nonce, f, Block{}, Hash{}, false, miningDifficulty}
 
 	for scanner.Scan() {
 		if err := scanner.Err(); err != nil {
@@ -123,7 +126,7 @@ func (s *State) AddBlocks(blocks []Block) error {
 func (s *State) AddBlock(b Block) (Hash, error) {
 	pendingState := s.Copy()
 
-	err := applyBlock(b, &pendingState)
+	err := applyBlock(b, pendingState)
 	if err != nil {
 		return Hash{}, err
 	}
@@ -210,7 +213,7 @@ func (c *State) ChangeMiningDifficulty(newDifficulty uint64) {
 	c.miningDifficulty = newDifficulty
 }
 
-func (s *State) Copy() State {
+func (s *State) Copy() *State {
 	c := State{}
 	c.hasGenesisBlock = s.hasGenesisBlock
 	c.latestBlock = s.latestBlock
@@ -227,7 +230,7 @@ func (s *State) Copy() State {
 		c.Account2Nonce[acc] = nonce
 	}
 
-	return c
+	return &c
 }
 
 func (s *State) Close() error {

@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/caddyserver/certmagic"
@@ -91,6 +92,8 @@ func (pn PeerNode) ApiProtocol() string {
 }
 
 type Node struct {
+	mux sync.RWMutex
+
 	dataDir string
 	info    PeerNode
 
@@ -149,7 +152,7 @@ func (n *Node) Run(ctx context.Context, isSSLDisabled bool, sslEmail string) err
 	n.state = state
 
 	pendingState := state.Copy()
-	n.pendingState = &pendingState
+	n.pendingState = pendingState
 
 	if state.NextBlockNumber() > 0 && state.LatestBlock().Header.Number > DefaultMiningDifficulty {
 		n.ChangeMiningDifficulty(state.LatestBlock().Header.Difficulty)
@@ -260,8 +263,10 @@ func (n *Node) mine(ctx context.Context) error {
 				blockHash, _ := block.Hash()
 				fmt.Printf("\nPeer mined next Block '%s' faster :(\n", blockHash.Hex())
 
+				n.Lock()
 				n.removeMinedPendingTXs(block)
 				stopCurrentMining()
+				n.Unlock()
 			}
 
 		case <-ctx.Done():
@@ -272,6 +277,8 @@ func (n *Node) mine(ctx context.Context) error {
 }
 
 func (n *Node) minePendingTXs(ctx context.Context) error {
+
+	n.RLock()
 
 	difficulty := n.miningDifficulty
 
@@ -289,10 +296,15 @@ func (n *Node) minePendingTXs(ctx context.Context) error {
 		n.getPendingTXsAsArray(),
 	)
 
+	n.RUnlock()
+
 	minedBlock, err := Mine(ctx, blockToMine)
 	if err != nil {
 		return err
 	}
+
+	n.Lock()
+	defer n.Unlock()
 
 	n.removeMinedPendingTXs(minedBlock)
 
@@ -385,7 +397,7 @@ func (n *Node) addBlock(block database.Block) error {
 	defer func() {
 		// Reset the pending state
 		pendingState := n.state.Copy()
-		n.pendingState = &pendingState
+		n.pendingState = pendingState
 	}()
 
 	_, err := n.state.AddBlock(block)
@@ -405,7 +417,7 @@ func (n *Node) resetChain() error {
 
 	n.state.ResetChain(n.dataDir)
 	pendingState := n.state.Copy()
-	n.pendingState = &pendingState
+	n.pendingState = pendingState
 
 	return nil
 }
@@ -492,4 +504,28 @@ loopBlocks:
 	}
 
 	return txs, nil
+}
+
+func (n *Node) Lock() {
+	n.mux.Lock()
+	n.state.Lock()
+	n.pendingState.Lock()
+}
+
+func (n *Node) Unlock() {
+	n.mux.Unlock()
+	n.state.Unlock()
+	n.pendingState.Unlock()
+}
+
+func (n *Node) RLock() {
+	n.mux.RLock()
+	n.state.RLock()
+	n.pendingState.RLock()
+}
+
+func (n *Node) RUnlock() {
+	n.mux.RUnlock()
+	n.state.RUnlock()
+	n.pendingState.RUnlock()
 }

@@ -42,6 +42,10 @@ func (n *Node) sync(ctx context.Context) error {
 }
 
 func (n *Node) doSync() {
+
+	n.Lock()
+	defer n.Unlock()
+
 	for _, peer := range n.knownPeers {
 		if n.info.IP == peer.IP && n.info.Port == peer.Port {
 			continue
