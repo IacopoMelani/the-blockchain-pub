@@ -23,6 +23,7 @@ import (
 	"reflect"
 	"sort"
 	"sync"
+	"sync/atomic"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -30,7 +31,9 @@ import (
 const TxFee = uint(50)
 
 type State struct {
-	sync.RWMutex
+	mux      sync.RWMutex
+	muxLock  uint32
+	muxRLock uint32
 
 	Balances      map[common.Address]uint
 	Account2Nonce map[common.Address]uint
@@ -59,6 +62,17 @@ func getInitialBalances(dataDir string) (map[common.Address]uint, error) {
 	return balances, nil
 }
 
+func NewState(dbFile *os.File, balances, account2nonce map[common.Address]uint, miningDifficulty uint64) *State {
+	return &State{
+		dbFile:           dbFile,
+		Balances:         balances,
+		Account2Nonce:    account2nonce,
+		miningDifficulty: miningDifficulty,
+		latestBlock:      Block{},
+		latestBlockHash:  Hash{},
+	}
+}
+
 func NewStateFromDisk(dataDir string, miningDifficulty uint64) (*State, error) {
 	err := InitDataDirIfNotExists(dataDir, []byte(genesisJson))
 	if err != nil {
@@ -80,8 +94,7 @@ func NewStateFromDisk(dataDir string, miningDifficulty uint64) (*State, error) {
 
 	scanner := bufio.NewScanner(f)
 
-	state := &State{sync.RWMutex{}, balances, account2nonce, f, Block{}, Hash{}, false, miningDifficulty}
-
+	state := NewState(f, balances, account2nonce, miningDifficulty)
 	for scanner.Scan() {
 		if err := scanner.Err(); err != nil {
 			return nil, err
@@ -332,4 +345,30 @@ func ValidateTx(tx SignedTx, s *State) error {
 	}
 
 	return nil
+}
+
+// MARK: State Mutex wrapper
+
+func (s *State) Lock() {
+	s.mux.Lock()
+	atomic.StoreUint32(&s.muxLock, 1)
+}
+
+func (s *State) Unlock() {
+	if atomic.LoadUint32(&s.muxLock) == 1 {
+		atomic.StoreUint32(&s.muxLock, 0)
+		s.mux.Unlock()
+	}
+}
+
+func (s *State) RLock() {
+	s.mux.RLock()
+	atomic.StoreUint32(&s.muxRLock, 1)
+}
+
+func (s *State) RUnlock() {
+	if atomic.LoadUint32(&s.muxRLock) == 1 {
+		atomic.StoreUint32(&s.muxRLock, 0)
+		s.mux.RUnlock()
+	}
 }
