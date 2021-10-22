@@ -64,7 +64,7 @@ const endtpointAddressBalance = "/address/balance"
 
 const endpointAddressTransactions = "/address/transactions"
 
-const miningIntervalSeconds = 10
+const miningIntervalSeconds = 12
 const DefaultMiningDifficulty = 2
 
 type PeerNode struct {
@@ -242,8 +242,8 @@ func (n *Node) mine(ctx context.Context) error {
 		select {
 		case <-ticker.C:
 			go func() {
-				if len(n.pendingTXs) > 0 && !n.isMining {
-					n.isMining = true
+				if !n.IsMining() {
+					n.setMining(true)
 
 					miningCtx, stopCurrentMining = context.WithCancel(ctx)
 					err := n.minePendingTXs(miningCtx)
@@ -251,12 +251,12 @@ func (n *Node) mine(ctx context.Context) error {
 						fmt.Printf("ERROR: %s\n", err)
 					}
 
-					n.isMining = false
+					n.setMining(false)
 				}
 			}()
 
 		case block := <-n.newSyncedBlocks:
-			if n.isMining {
+			if n.IsMining() {
 				blockHash, _ := block.Hash()
 				fmt.Printf("\nPeer mined next Block '%s' faster :(\n", blockHash.Hex())
 
@@ -320,6 +320,10 @@ func (n *Node) removeMinedPendingTXs(block database.Block) {
 	}
 }
 
+func (n *Node) setMining(value bool) {
+	n.isMining = value
+}
+
 func (n *Node) ChangeMiningDifficulty(newDifficulty uint64) {
 	n.miningDifficulty = newDifficulty
 	n.state.ChangeMiningDifficulty(newDifficulty)
@@ -341,6 +345,10 @@ func (n *Node) IsKnownPeer(peer PeerNode) bool {
 	_, isKnownPeer := n.knownPeers[peer.TcpAddress()]
 
 	return isKnownPeer
+}
+
+func (n *Node) IsMining() bool {
+	return n.isMining
 }
 
 func (n *Node) AddPendingTX(tx database.SignedTx, fromPeer PeerNode) error {

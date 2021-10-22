@@ -38,9 +38,6 @@ func NewPendingBlock(parent database.Hash, number uint64, miner common.Address, 
 }
 
 func Mine(ctx context.Context, pb PendingBlock) (database.Block, error) {
-	if len(pb.txs) == 0 {
-		return database.Block{}, fmt.Errorf("mining empty blocks is not allowed")
-	}
 
 	start := time.Now()
 	attempt := 0
