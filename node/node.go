@@ -18,6 +18,7 @@ package node
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -64,7 +65,7 @@ const endtpointAddressBalance = "/address/balance"
 
 const endpointAddressTransactions = "/address/transactions"
 
-const miningIntervalSeconds = 12
+const miningIntervalSeconds = 3
 const DefaultMiningDifficulty = 2
 
 type PeerNode struct {
@@ -151,8 +152,8 @@ func (n *Node) Run(ctx context.Context, isSSLDisabled bool, sslEmail string) err
 	pendingState := state.Copy()
 	n.pendingState = &pendingState
 
-	if state.NextBlockNumber() > 0 && state.LatestBlock().Header.Number > DefaultMiningDifficulty {
-		n.ChangeMiningDifficulty(state.LatestBlock().Header.Difficulty)
+	if err := n.CheckDifficulty(); err != nil {
+		return err
 	}
 
 	fmt.Println("Blockchain state:")
@@ -242,8 +243,13 @@ func (n *Node) mine(ctx context.Context) error {
 		select {
 		case <-ticker.C:
 			go func() {
+
 				if !n.IsMining() {
 					n.setMining(true)
+
+					if err := n.CheckDifficulty(); err != nil {
+						fmt.Printf("Error checking difficulty: %s\n", err)
+					}
 
 					miningCtx, stopCurrentMining = context.WithCancel(ctx)
 					err := n.minePendingTXs(miningCtx)
@@ -274,12 +280,6 @@ func (n *Node) mine(ctx context.Context) error {
 func (n *Node) minePendingTXs(ctx context.Context) error {
 
 	difficulty := n.miningDifficulty
-
-	// increase mining difficulty
-	if n.state.NextBlockNumber() > 0 && n.state.NextBlockNumber()%100 == 0 {
-		difficulty++
-		n.ChangeMiningDifficulty(difficulty)
-	}
 
 	blockToMine := NewPendingBlock(
 		n.state.LatestBlockHash(),
@@ -324,9 +324,73 @@ func (n *Node) setMining(value bool) {
 	n.isMining = value
 }
 
+func (n *Node) CheckDifficulty() error {
+
+	n.Lock()
+	defer n.Unlock()
+
+	if n.state.LatestBlock().Header.Number%uint64(database.BlockNumberToCheckDifficulty) == 0 {
+		difficulty, err := n.GetNewDifficulty()
+		if err != nil {
+			return err
+		}
+		n.ChangeMiningDifficulty(difficulty)
+	}
+	return nil
+}
+
+func (n *Node) GetAproximateBlockResolutionTime() (time.Duration, error) {
+
+	blocks, err := database.GetBlocksBefore(n.LatestBlockHash(), database.BlockNumberToCheckDifficulty, n.dataDir)
+	if err != nil {
+		return 0, err
+	}
+
+	// diff time beetween first and last block mined in blocks slice
+
+	if len(blocks) == 0 {
+		return 0, nil
+	}
+
+	firstBlock := blocks[0]
+	lastBlock := blocks[len(blocks)-1]
+
+	firstBlockTime := time.Unix(int64(firstBlock.Value.Header.Time), 0)
+	lastBlockTime := time.Unix(int64(lastBlock.Value.Header.Time), 0)
+
+	diff := lastBlockTime.Sub(firstBlockTime)
+
+	return diff / time.Duration(len(blocks)), nil
+}
+
+func (n *Node) GetNewDifficulty() (uint64, error) {
+
+	if n.miningDifficulty == 0 {
+		return 0, errors.New("mining difficulty is 0")
+	}
+
+	average, err := n.GetAproximateBlockResolutionTime()
+	if err != nil {
+		return 0, err
+	}
+
+	if average == 0 {
+		return n.miningDifficulty, nil
+	}
+
+	if average < database.MiningAproxTime {
+		return (n.miningDifficulty + 1), nil
+	} else if average > database.MiningAproxTime {
+		return (n.miningDifficulty - 1), nil
+	} else {
+		return n.miningDifficulty, nil
+	}
+}
+
 func (n *Node) ChangeMiningDifficulty(newDifficulty uint64) {
 	n.miningDifficulty = newDifficulty
 	n.state.ChangeMiningDifficulty(newDifficulty)
+	fmt.Printf("Change mining difficulty to: %d\n", newDifficulty)
 }
 
 func (n *Node) AddPeer(peer PeerNode) {
@@ -399,10 +463,6 @@ func (n *Node) addBlock(block database.Block) error {
 	_, err := n.state.AddBlock(block)
 	if err != nil {
 		return err
-	}
-
-	if n.state.LatestBlock().Header.Difficulty > n.miningDifficulty {
-		n.ChangeMiningDifficulty(n.state.LatestBlock().Header.Difficulty)
 	}
 
 	return nil

@@ -21,11 +21,15 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 )
 
 const BlockReward = 100
+
+const MiningAproxTime = 30 * time.Second
+const BlockNumberToCheckDifficulty = 10
 
 type Hash [32]byte
 

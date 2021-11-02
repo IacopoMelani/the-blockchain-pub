@@ -253,15 +253,7 @@ func applyBlock(b Block, s *State) error {
 		return err
 	}
 
-	currentDifficulty := s.miningDifficulty
-
-	// increase mining difficulty
-	if s.NextBlockNumber() > 0 && s.NextBlockNumber()%100 == 0 {
-		currentDifficulty++
-		s.ChangeMiningDifficulty(currentDifficulty)
-	}
-
-	if !IsBlockHashValid(hash, s.miningDifficulty) {
+	if !IsBlockHashValid(hash, b.Header.Difficulty) {
 		return fmt.Errorf("invalid block hash %x", hash)
 	}
 
