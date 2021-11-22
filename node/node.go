@@ -152,7 +152,14 @@ func (n *Node) Run(ctx context.Context, isSSLDisabled bool, sslEmail string) err
 	pendingState := state.Copy()
 	n.pendingState = &pendingState
 
-	if err := n.CheckDifficulty(); err != nil {
+	if err = func() error {
+
+		if err := n.CheckDifficulty(); err != nil {
+			return err
+		}
+
+		return nil
+	}(); err != nil {
 		return err
 	}
 
@@ -247,10 +254,6 @@ func (n *Node) mine(ctx context.Context) error {
 				if !n.IsMining() {
 					n.setMining(true)
 
-					if err := n.CheckDifficulty(); err != nil {
-						fmt.Printf("Error checking difficulty: %s\n", err)
-					}
-
 					miningCtx, stopCurrentMining = context.WithCancel(ctx)
 					err := n.minePendingTXs(miningCtx)
 					if err != nil {
@@ -305,6 +308,7 @@ func (n *Node) minePendingTXs(ctx context.Context) error {
 }
 
 func (n *Node) removeMinedPendingTXs(block database.Block) {
+
 	if len(block.TXs) > 0 && len(n.pendingTXs) > 0 {
 		fmt.Println("Updating in-memory Pending TXs Pool:")
 	}
@@ -326,9 +330,6 @@ func (n *Node) setMining(value bool) {
 
 func (n *Node) CheckDifficulty() error {
 
-	n.Lock()
-	defer n.Unlock()
-
 	if n.state.LatestBlock().Header.Number%uint64(database.BlockNumberToCheckDifficulty) == 0 {
 		difficulty, err := n.GetNewDifficulty()
 		if err != nil {
@@ -336,6 +337,7 @@ func (n *Node) CheckDifficulty() error {
 		}
 		n.ChangeMiningDifficulty(difficulty)
 	}
+
 	return nil
 }
 
@@ -463,6 +465,10 @@ func (n *Node) addBlock(block database.Block) error {
 	_, err := n.state.AddBlock(block)
 	if err != nil {
 		return err
+	}
+
+	if err := n.CheckDifficulty(); err != nil {
+		fmt.Printf("Error checking difficulty: %s\n", err)
 	}
 
 	return nil
